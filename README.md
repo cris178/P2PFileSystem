@@ -46,7 +46,8 @@ Now your OS is ready to support a FUSE filesystem.
 
 
 
-## Building FUSE
+## Building the File System
+The src Folder contains the program for our FUSE file system. 
 
 
 ## Resources
