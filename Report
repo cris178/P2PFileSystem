@@ -1,0 +1,23 @@
+Objective
+Objective: The objective for our project is to design a Peer to Peer File System.
+
+Milestones:
+	• Miles Stone 1 : Complete File System 
+		○ FUSE should be properly installed on machine
+		○ Should able to mount a FUSE file system
+		○ Finish setting up FUSE Structure
+		○ Set Up script Tests 
+		○ Set up performance tests(If time allows)
+	• Miles Stone 2 : Complete Distributed Hash Table
+	• Mile Stone 3: Connect FUSE to DHT
+	• Set Up Project on Docker(If time allows)
+
+Design Details:
+
+
+Because it's in user space we won't have to deal with low level coding. The Fuse library should give us functions that handle communications with the Kernel. Basically Fuse  what we will use to build the Filesystem using C. 
+
+
+
+resources
+what's working what's not.
