@@ -66,9 +66,9 @@ struct fuse_operations {
 
 #include <fuse.h>
 #include <stdio.h>
-#include <unistd.h>    //http://man7.org/linux/man-pages/man2/getuid.2.html
+#include <unistd.h>	//http://man7.org/linux/man-pages/man2/getuid.2.html
 #include <sys/types.h> //This and above are for getting uid(userid) and gid(groupid)
-#include <time.h>      //Used to get acess time of files and modification times
+#include <time.h>	  //Used to get acess time of files and modification times
 #include <string.h>
 #include <stdlib.h>
 
@@ -78,25 +78,36 @@ struct fuse_operations {
 //Param 2: stat structure that needs to be that needs to be filled with attributes
 //Return 0: if success
 //return -1: with errno with correct errorcode
-static int ptwopGetAttr(const char *path, struct stat *stats)
+static int p2pGetAttr(const char *path, struct stat *stats)
 {
 
-    stats->userID = getuid();             //stuid is the owner of the file. ->Make this person who mounted the directory.
-    stats->groupID = getgid();            //owner group of the files or directories/subdirectories. ->Make this person who mounted the directory
-    stats->acessTIME = time(NULL);        //last acess time
-    stats->modificationTime = time(NULL); //last modification time
+	stats->userID = getuid();			  //stuid is the owner of the file. ->Make this person who mounted the directory.
+	stats->groupID = getgid();			  //owner group of the files or directories/subdirectories. ->Make this person who mounted the directory
+	stats->acessTIME = time(NULL);		  //last acess time
+	stats->modificationTime = time(NULL); //last modification time
 
-    if (strcmp(path, "/") == 0) //Wil run first option if in root
-    {
-        stats->st_mode = S_IFDIR | 0755; //(check if file or dir) |(permission bits)        st_mode shows if is regular file, directior, other and permission bits of that file.
-        stats->st_nlink = 2;             //Shows number of Hardlinks, Hardlinks, like copying a file but not a copy, a link to original file but modifying hardlink modifies original as well.
-    }                                    //Reason why twp hardlinks  https://unix.stackexchange.com/questions/101515/why-does-a-new-directory-have-a-hard-link-count-of-2-before-anything-is-added-to/101536#101536
-    else
-    {
-        stats->st_mode = S_IFREG | 0644;
-        stats->st_nlink = 1;
-        stats->st_size = 1024; //Size of files in bytes
-    }
+	if (strcmp(path, "/") == 0) //Wil run first option if in root
+	{
+		stats->st_mode = S_IFDIR | 0755; //(check if file or dir) |(permission bits)        st_mode shows if is regular file, directior, other and permission bits of that file.
+		stats->st_nlink = 2;			 //Shows number of Hardlinks, Hardlinks, like copying a file but not a copy, a link to original file but modifying hardlink modifies original as well.
 
-    return 0;
+		/*Seeing what S_IFDIR retunrs*/
+		printf("Testing: \t%i" S_IFDIR);
+
+	} //Reason why twp hardlinks  https://unix.stackexchange.com/questions/101515/why-does-a-new-directory-have-a-hard-link-count-of-2-before-anything-is-added-to/101536#101536
+	else
+	{
+		stats->st_mode = S_IFREG | 0644;
+		stats->st_nlink = 1;
+		stats->st_size = 1024; //Size of files in bytes
+	}
+
+	return 0;
+}
+
+//Only need first 3 params - Path of dir
+static int p2pDoReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+{
+
+	return 0; //returns 0 on success.
 }
