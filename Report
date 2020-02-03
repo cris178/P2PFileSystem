@@ -1,23 +1,52 @@
 Objective
-Objective: The objective for our project is to design a Peer to Peer File System.
+The objective for our project is to design a peer to peer file system. 
+The file system will be capable of replicating all actions that a standard filesystem can do such as read and writing files, renaming files,  and creating new directories. Using a Distributed Hash Table, we will be able to create a file system that shares data with other filesystems sharing our codebase.
 
-Milestones:
-	• Miles Stone 1 : Complete File System 
+Design Details
+We will be splitting up the work 50/50 using a light agile development work flow. One team mate will work on the FUSE file system and the other on the DHT. Each week we meet up and assign tasks that need to be done by the end of each week with a loose dead line shown in the Milestones section. 
+
+FUSE
+We are building our file system in FUSE. Using the libfuse functions it allows for us to create higher level programs that will define the functionality of the filesystem without having to go down to the kernel level. In order to do this IBM offers insight to how the Andrew File System was recreated using FUSE. 
+
+While a lot of the information on there is irrelevant for our P2P file system it does show us how to mount a FUSE file system and the structure of the fuse functions along with descriptions. For our file system we will need to implement each of the functions. We have currently completed the workflow to mounting a fuse filesystem and our in process of building each fuse function for our file system.
+
+Distributed Hash Table
+The Distributed Hash Table will be
+
+
+
+Milestones
+	• Miles Stone 1 : Complete the File System
 		○ FUSE should be properly installed on machine
 		○ Should able to mount a FUSE file system
-		○ Finish setting up FUSE Structure
+		○ Finish setting up FUSE Structure(Week 7)
 		○ Set Up script Tests 
 		○ Set up performance tests(If time allows)
 	• Miles Stone 2 : Complete Distributed Hash Table
-	• Mile Stone 3: Connect FUSE to DHT
+	• Mile Stone 3: Connect FUSE to DHT (Week 7-8)
 	• Set Up Project on Docker(If time allows)
 
-Design Details:
 
 
 Because it's in user space we won't have to deal with low level coding. The Fuse library should give us functions that handle communications with the Kernel. Basically Fuse  what we will use to build the Filesystem using C. 
 
 
+Our Project Repository:
+https://github.com/cris178/P2PFileSystem
 
-resources
-what's working what's not.
+
+Sources
+
+IBM: https://developer.ibm.com/articles/l-fuse/
+
+Testing Types of Files:
+https://www.gnu.org/software/libc/manual/html_node/Testing-File-Type.html
+
+Kademlia Explained:
+https://en.wikipedia.org/wiki/Kademlia
+
+What are DHT's
+https://github.com/savoirfairelinux/opendht/wiki/What-are-Distributed-Hash-Tables-%3F
+
+OpenDHT API Overview:
+https://github.com/savoirfairelinux/opendht/wiki/API-Overview
