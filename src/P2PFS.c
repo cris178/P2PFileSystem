@@ -92,7 +92,7 @@ static int p2pGetAttr(const char *path, struct stat *stats)
 		stats->st_nlink = 2;			 //Shows number of Hardlinks, Hardlinks, like copying a file but not a copy, a link to original file but modifying hardlink modifies original as well.
 
 		/*Seeing what S_IFDIR retunrs*/
-		printf("CHECK Testing: \t%i", S_IFDIR);
+		//printf("CHECK Testing: \t%i", S_IFDIR);
 
 	} //Reason why twp hardlinks  https://unix.stackexchange.com/questions/101515/why-does-a-new-directory-have-a-hard-link-count-of-2-before-anything-is-added-to/101536#101536
 	else
