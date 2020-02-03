@@ -58,8 +58,17 @@ Next you will run the program
                                     -mounting point is the name to an empty folder you select to turn into our FS
 
 The program will run displaying a bunch of print statements.
-Open another tab, hit ls -lr to see if the mounting point is now a file system.
+Open another tab on your Terminal, hit ls -lr to see if the mounting point is now a file system.
 Also, you can check if a file system is created using the regular Ubuntu UI for the file explorer.
+
+
+To unmount use the instruction
+
+fusermount -u [mounting point]
+
+or
+
+ctrl c on the first tab with the print statements.
 
 
 ## Resources
