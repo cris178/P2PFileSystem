@@ -81,10 +81,10 @@ struct fuse_operations {
 static int p2pGetAttr(const char *path, struct stat *stats)
 {
 
-	stats->userID = getuid();			  //stuid is the owner of the file. ->Make this person who mounted the directory.
-	stats->groupID = getgid();			  //owner group of the files or directories/subdirectories. ->Make this person who mounted the directory
-	stats->acessTIME = time(NULL);		  //last acess time
-	stats->modificationTime = time(NULL); //last modification time
+	stats->st_uid = getuid();	 //stuid is the owner of the file. ->Make this person who mounted the directory.
+	stats->st_gid = getgid();	 //owner group of the files or directories/subdirectories. ->Make this person who mounted the directory
+	stats->st_atime = time(NULL); //last acess time
+	stats->st_mtime = time(NULL); //last modification time
 
 	if (strcmp(path, "/") == 0) //Wil run first option if in root
 	{
