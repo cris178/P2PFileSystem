@@ -160,5 +160,13 @@ static struct fuse_operations operations = {
 
 int main(int argc, char *argv[])
 {
+	//Check Fuse Version we are runnign
+	fprintf(stderr, "Checking Fuse Version... %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
+
+	//Don't allow user to run as Root. Major security issues.
+	if ((getuid() == 0) || (geteuid() == 0)) {
+    		fprintf(stderr, "Can't Run Fuse File System as Root User! Security issues.\n");
+    		return 1;
+    	}
 	return fuse_main(argc, argv, &operations, NULL);
 }
