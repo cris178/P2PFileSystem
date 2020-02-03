@@ -49,6 +49,18 @@ Now your OS is ready to support a FUSE filesystem.
 ## Building the File System
 The src Folder contains the program for our FUSE file system. 
 
+In order to mount the file system build the program using gcc 
+
+* gcc P2PFS.c -o P2PFS `pkg-config fuse --cflags --libs`
+
+Next you will run the program
+* ./P2PFS -f [mounting point]       -f is to see print statements while program is running
+                                    -mounting point is the name to an empty folder you select to turn into our FS
+
+The program will run displaying a bunch of print statements.
+Open another tab, hit ls -lr to see if the mounting point is now a file system.
+Also, you can check if a file system is created using the regular Ubuntu UI for the file explorer.
+
 
 ## Resources
 
