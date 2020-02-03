@@ -105,9 +105,60 @@ static int p2pGetAttr(const char *path, struct stat *stats)
 	return 0;
 }
 
-//Only need first 3 params - Path of dir
+//Only need first 3 params - Path of dir  - buffer - filler
 static int p2pDoReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
+	printf("--> Getting The List of Files of %s\n", path);
+
+	//Path is is the path to current directory
+	//Buffer is what we will fill with names of files and directories in current location
+	//Filler is a Fuse a function sent by fuse which we will use to fill the buffer using the path
+
+	filler(buffer, ".", NULL, 0);  //Current Directory
+	filler(buffer, "..", NULL, 0); //Parent Directory
+
+	//See if valid path
+	if (strcmp(path, "/") == 0)
+	{
+		//Use our Fuse provided filler Functions
+		filler(buffer, "file54", NULL, 0);
+		filler(buffer, "file349", NULL, 0);
+	}
 
 	return 0; //returns 0 on success.
+}
+
+static int p2pDoRead(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+	printf("--> Trying to read %s, %u, %u\n", path, offset, size);
+
+	char file54Text[] = "Hello World From File54!";
+	char file349Text[] = "Hello World From File349!";
+	char *selectedText = NULL;
+
+	// ... //
+
+	if (strcmp(path, "/file54") == 0)
+		selectedText = file54Text;
+	else if (strcmp(path, "/file349") == 0)
+		selectedText = file349Text;
+	else
+		return -1;
+
+	// ... //
+
+	memcpy(buffer, selectedText + offset, size);
+
+	return strlen(selectedText) - offset;
+}
+
+static struct fuse_operations operations = {
+	.getattr = p2pGetAttr,
+	.readdir = p2pDoReadDir,
+	.read = p2pDoRead,
+};
+
+int main(int argc, char *argv[])
+{
+	return fuse_main(argc, argv, &operations, NULL);
 }
