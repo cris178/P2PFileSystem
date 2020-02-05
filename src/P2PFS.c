@@ -143,25 +143,24 @@ int p2pSysCall(char *func, int returnStatus, int min_ret)
 //return -1: with errno with correct errorcode
 static int p2pGetAttr(const char *path, struct stat *stats) //stats is a buffer
 {
-	/*
+
 	int returnStatus;
 	char filePath[PATH_MAX];
 
 	p2pFullPath(filePath, path);
-	printf("\np2pGetAttr: FilePath \"%s\", stat buffer=0x%08x)\n", path, stats);
+	//printf("\np2pGetAttr: Compiled FilePath \"%s\", stat buffer=0x%08x)\n", path, stats);
 
 	returnStatus = p2pSysCall("lstat", lstat(filePath, stats), 0);
 
-	printf("We should be returning a 0 or 1 in getAttri %i", returnStatus);
+	return returnStatus; //Returns 0 if good
 
-	return returnStatus;
-	*/
-
+	/******
 	stats->st_uid = getuid();	 //stuid is the owner of the file. ->Make this person who mounted the directory.
 	stats->st_gid = getgid();	 //owner group of the files or directories/subdirectories. ->Make this person who mounted the directory
 	stats->st_atime = time(NULL); //last acess time
 	stats->st_mtime = time(NULL); //last modification time
-
+	**/
+	/**
 	if (strcmp(path, "/") == 0) //Wil run first option if in root
 	{
 		stats->st_mode = S_IfileDescriptorIR | 0755; //(check if file or dir) |(permission bits)        st_mode shows if is regular file, directior, other and permission bits of that file.
@@ -169,9 +168,10 @@ static int p2pGetAttr(const char *path, struct stat *stats) //stats is a buffer
 
 		//Seeing what S_IfileDescriptorIR retunrs
 		//printf("CHECK Testing: \t%i", S_IfileDescriptorIR);
-	}
+	
+	} **/
 	//Reason why twp hardlinks  https://unix.stackexchange.com/questions/101515/why-does-a-new-directory-have-a-hard-link-count-of-2-before-anything-is-added-to/101536#101536
-	else
+	/****else
 	{
 		stats->st_mode = S_IFREG | 0644;
 		stats->st_nlink = 1;
@@ -179,6 +179,7 @@ static int p2pGetAttr(const char *path, struct stat *stats) //stats is a buffer
 	}
 
 	return 0;
+	******/
 }
 
 //Only need first 3 params - Path of dir  - buffer - filler (filler comes from fuse.h)
