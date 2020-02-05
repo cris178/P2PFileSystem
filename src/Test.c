@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[])
 {
-
+    char rootdir;
     printf("ArgC count: %d\n", argc);
 
     int i = 0;
@@ -16,11 +16,17 @@ int main(int argc, char *argv[])
         printf("ArgV Value: %i "
                "%s\n",
                i, argv[i]);
-        char *rootdir = realpath(argv[1], NULL); // We get /
+        //char *rootdir = realpath(argv[1], NULL); // We get /
         //printf("\n\n%c", *rootdir);
         //printf("\n\n%c", *rootdir);
-        printf("First Spot %c\n", *rootdir);
+        //printf("First Spot %c\n", *rootdir);
     }
+
+    rootdir = realpath(argv[argc - 2], NULL);
+    printf("Printing Arguements %c \n", rootdir);
+    //argv[argc - 2] = argv[argc - 1];
+    //argv[argc - 1] = NULL;
+    //argc--;
 
     printf("%s\n", realpath(argv[argc - 3], NULL)); //Finds a file or directory and returns its path if not file or directory will seg fault
     printf("We can see above that we can't ever get n so go one under");

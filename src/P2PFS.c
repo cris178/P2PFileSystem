@@ -347,7 +347,8 @@ int main(int argc, char *argv[])
 	printf("Starting up FileSystem...");
 	//Need to save some data
 	//For performance reasons instead of getting the path every single time we can construct it using a saved Root
-	p2pData->rootDir = realpath(argv[argc - 1], NULL);
+	//-f is counted
+	p2pData->rootDir = realpath(argv[argc - 2], NULL);
 	printf("Ceated Pointer to Path of Root Directory: %s", realpath(argv[argc - 1], NULL));
 
 	//bb_data->logfile = log_open();
