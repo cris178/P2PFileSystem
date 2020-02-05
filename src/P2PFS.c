@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
 	//For performance reasons instead of getting the path every single time we can construct it using a saved Root
 	//-f is counted
 	printf("Arguements Count is %d\n", argc);
-	printf("Aguement Values are...");
+	printf("Aguement Values are... %s %s %s\n", argv[0], argv[1], argv[2]);
 	//p2pData->rootDir = realpath(argv[argc - 2], NULL);
 	printf("Ceated Pointer to Path of Root Directory: %s\n", realpath(argv[argc - 1], NULL));
 
@@ -363,6 +363,6 @@ int main(int argc, char *argv[])
 
 	//Check Fuse Version we are runnign
 	fprintf(stderr, "Checking Fuse Version... %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
-
+	return 0;
 	return fuse_main(argc, argv, &operations, NULL);
 }
