@@ -252,8 +252,10 @@ static int p2pReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 //Do next
 static int p2pRead(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-	printf("--> Trying to read %s, %u, %u\n", path, offset, size);
-
+	int returnStatus;
+	printf("p2pRead: (path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n", path, buf, size, offset, fi);
+	return p2pSysCall("pread", pread(fi->fh, buf, size, offset), 0);
+	/*
 	char file54Text[] = "Hello World From File54!";
 	char file349Text[] = "Hello World From File349!";
 	char *selectedText = NULL;
@@ -272,6 +274,7 @@ static int p2pRead(const char *path, char *buffer, size_t size, off_t offset, st
 	memcpy(buffer, selectedText + offset, size);
 
 	return strlen(selectedText) - offset;
+	*/
 }
 
 /********************
