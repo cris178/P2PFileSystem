@@ -369,5 +369,5 @@ int main(int argc, char *argv[])
 	//Check Fuse Version we are runnign
 	fprintf(stderr, "Checking Fuse Version... %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
 	return 0;
-	return fuse_main(argc, argv, &operations, NULL);
+	return fuse_main(argc, argv, &operations, p2pData);
 }
