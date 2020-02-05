@@ -357,7 +357,7 @@ int main(int argc, char *argv[])
 	printf("Arguements Count is %d\n", argc);
 	printf("Aguement Values are... %s %s %s\n", argv[0], argv[1], argv[2]);
 	p2pData->rootDir = realpath(argv[argc - 1], NULL);
-	printf("Ceated Pointer to Path of Root Directory: %s\n", realpath(argv[argc - 1], NULL));
+	printf("Ceated Pointer to Path of Root Directory: %s\n", p2pData->rootDir);
 
 	//bb_data->logfile = log_open();
 
