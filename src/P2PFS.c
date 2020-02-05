@@ -218,7 +218,7 @@ static int p2pReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 		printf("calling filler with name %s\n", directoryEntry->d_name);
 		if (filler(buffer, directoryEntry->d_name, NULL, 0) != 0) //directoryEntry has name field   https://stackoverflow.com/questions/12991334/members-of-dirent-structure
 		{
-			log_msg("    ERROR bb_readdir filler:  buffer full");
+			//log_msg("    ERROR bb_readdir filler:  buffer full");
 			printf("ERROR p2pReadDir filler:  buffer full");
 			return -ENOMEM; //Not enough core. Not enough memory is available for the attempted operator. https://docs.microsoft.com/en-us/cpp/c-runtime-library/errno-constants?view=vs-2019
 		}
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 	//Need to save some data
 	//For performance reasons instead of getting the path every single time we can construct it using a saved Root
 	p2pData->rootDir = realpath(argv[argc - 1], NULL);
-	print("Ceated Pointer to Path of Root Directory: %s", realpath(argv[argc - 1], NULL));
+	printf("Ceated Pointer to Path of Root Directory: %s", realpath(argv[argc - 1], NULL));
 
 	//bb_data->logfile = log_open();
 
