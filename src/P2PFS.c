@@ -360,14 +360,13 @@ int main(int argc, char *argv[])
 	//Need root directory which is index 2 or (3-1)
 	p2pData->rootDir = realpath(argv[argc - 1], NULL); //0 is instructions, 1 is -f, 2 is mountdir total 3
 	printf("Ceated Pointer to Path of Root Directory: %s\n", p2pData->rootDir);
-	argv[argc - 2] = argv[argc - 1];
-	argv[argc - 1] = NULL;
-	argc--;
+	//argv[argc - 2] = argv[argc - 1];
+	//argv[argc - 1] = NULL;
+	//argc--;
 
 	//bb_data->logfile = log_open();
 
 	//Check Fuse Version we are runnign
 	fprintf(stderr, "Checking Fuse Version... %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
-	return 0;
 	return fuse_main(argc, argv, &operations, p2pData);
 }
