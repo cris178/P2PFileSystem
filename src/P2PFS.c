@@ -85,7 +85,7 @@ struct fuse_operations {
  * ************************/
 static void p2pFullPath(char fpath[PATH_MAX], const char *path)
 {
-	strcpy(fpath, P2PData->rootdir);
+	strcpy(fpath, P2PDATA->rootdir);
 	strncat(fpath, path, PATH_MAX); // If path is huge may surpass PATH_MAX and break
 	printf("Assembled Full Path: Root Dir = \"%s\",path = \"%s\", fullpath = \"%s\"\n", p2pData->rootDir, path, fpath);
 	//log_msg("    p2pFullPath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",BB_DATA->rootdir, path, fpath);
