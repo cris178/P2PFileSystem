@@ -100,7 +100,7 @@ void p2pReturnStatus(char *func, int returnStatus)
 {
 	int errSave = errno;
 	//log_msg("    %s returned %d\n", func, returnStatus);
-	printf("p2pReturnStatus: Return Status Returned: %s , %d\n", funct, returnStatus);
+	printf("p2pReturnStatus: Return Status Returned: %s , %d\n", func, returnStatus);
 	errno = errSave;
 }
 
@@ -134,22 +134,23 @@ int p2pSysCall(char *func, int returnStatus, int min_ret)
 	return returnStatus;
 }
 
+//This gets file attributes
 //getattr - similar to stat function in linux
 //We will pass in two paramters and retunr an integer
 //Param 1: path of file we will get attributes of
 //Param 2: stat structure that needs to be that needs to be filled with attributes
 //Return 0: if success
 //return -1: with errno with correct errorcode
-static int p2pGetAttr(const char *path, struct stat *stats)
+static int p2pGetAttr(const char *path, struct stat *stats) //stats is a buffer
 {
 
 	int returnStatus;
-	char filePath[MAX_PATH];
+	char filePath[PATH_MAX];
 
 	p2pFullPath(filePath, path);
 	printf("\np2pGetAttr: FilePath \"%s\", statbuf=0x%08x)\n", path, stats);
 
-	returnStatus = p2pSysCall("lstat", lstat(fpath, statbuf), 0);
+	returnStatus = p2pSysCall("lstat", lstat(filePath, stats), 0);
 
 	return returnStatus;
 
@@ -189,7 +190,7 @@ static int p2pReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 	struct dirent *directoryEntry; //man readdir
 
 	//log_msg("\nbb_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n",path, buf, filler, offset, fi);
-	logf("\np2pReadDir path=\"%s\",buffer=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n", path, buffer, filler, offset, fi);
+	printf("\np2pReadDir path=\"%s\",buffer=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n", path, buffer, filler, offset, fi);
 
 	// once again, no need for fullpath -- but note that I need to cast fi->fh
 	directoryPointer = (DIR *)(uintptr_t)fi->fh; //Type casting fi= file information we do this to use readdir() later on
@@ -253,8 +254,8 @@ static int p2pReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 static int p2pRead(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	int returnStatus;
-	printf("p2pRead: (path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n", path, buf, size, offset, fi);
-	return p2pSysCall("pread", pread(fi->fh, buf, size, offset), 0);
+	printf("p2pRead: (path=\"%s\", buffer=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n", path, buffer, size, offset, fi);
+	return p2pSysCall("pread", pread(fi->fh, buffer, size, offset), 0);
 	/*
 	char file54Text[] = "Hello World From File54!";
 	char file349Text[] = "Hello World From File349!";
@@ -333,7 +334,7 @@ int main(int argc, char *argv[])
 	if (argc < 1)
 	{
 		fprintf(stderr, "please provide a mounting point\n");
-		abort() //End program
+		abort(); //End program
 	}
 
 	//Don't allow user to run as Root. Major security issues.
