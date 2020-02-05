@@ -64,13 +64,75 @@ struct fuse_operations {
 
 #define FUSE_USE_VERSION 30
 
+#include "params.h" //
+
 #include <fuse.h>
 #include <stdio.h>
-#include <unistd.h>	//http://man7.org/linux/man-pages/man2/getuid.2.html
-#include <sys/types.h> //This and above are for getting uid(userid) and gid(groupid)
+#include <unistd.h>	//http://man7.org/linux/man-pages/man2/getuid.2.html also for lstat() https://linux.die.net/man/2/lstat
+#include <sys/types.h> //This and above are for getting uid(userid) and gid(groupid),and used with dirent.h
 #include <time.h>	  //Used to get acess time of files and modification times
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h> //PATH_MAX comes form this library
+#include <dirent.h> //man opendir/readdir used for DIR *directorypointer easy way to open directories.
+#include <errno.h>  //This is for error messages https://docs.microsoft.com/en-us/cpp/c-runtime-library/errno-constants?view=vs-2019
+
+/**********************
+ * Get the Root Directory we
+ * saved in params.h and 
+ * concatenate it with the 
+ * local path provided in each function
+ * ************************/
+static void p2pFullPath(char fpath[PATH_MAX], const char *path)
+{
+	strcpy(fpath, p2pData->rootdir);
+	strncat(fpath, path, PATH_MAX); // If path is huge may surpass PATH_MAX and break
+	printf("Assembled Full Path: Root Dir = \"%s\",path = \"%s\", fullpath = \"%s\"\n", p2pData->rootDir, path, fpath);
+	//log_msg("    p2pFullPath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",BB_DATA->rootdir, path, fpath);
+}
+
+/*********************************\
+ * 			p2pReturnStatus
+ * Checks the Returns Status
+ * 
+ * *******************************/
+void p2pReturnStatus(char *func, int returnStatus)
+{
+	int errSave = errno;
+	//log_msg("    %s returned %d\n", func, returnStatus);
+	printf("p2pReturnStatus: Return Status Returned: %s , %d\n", funct, returnStatus);
+	errno = errSave;
+}
+
+// Report errors to logfile and give -errno to caller
+int p2pError(char *func)
+{
+	int ret = -errno;
+	//log_msg("    ERROR %s: %s\n", func, strerror(errno));
+	printf("p2pError: Error %s: %s\n", func, strerror(errno));
+	return ret;
+}
+/********************************
+ * 			p2pSysCall
+ * This function makes a system call.
+ * Check the returns status and sometimes logging error.
+ * 
+ * *******************************/
+// make a system call, checking (and reporting) return status and
+// possibly logging error
+int p2pSysCall(char *func, int returnStatus, int min_ret)
+{
+	p2pReturnStatus(func, returnStatus);
+
+	if (returnStatus < min_ret)
+	{
+		p2pError(func);
+		returnStatus = -errno;
+	}
+
+	printf("p2pSysCall: a syscall was made and returning status %i\n", returnStatus);
+	return returnStatus;
+}
 
 //getattr - similar to stat function in linux
 //We will pass in two paramters and retunr an integer
@@ -81,21 +143,34 @@ struct fuse_operations {
 static int p2pGetAttr(const char *path, struct stat *stats)
 {
 
+	int returnStatus;
+	char filePath[MAX_PATH];
+
+	p2pFullPath(filePath, path);
+	printf("\np2pGetAttr: FilePath \"%s\", statbuf=0x%08x)\n", path, stats);
+
+	returnStatus = p2pSysCall("lstat", lstat(fpath, statbuf), 0);
+
+	return returnStatus;
+
+	/******
 	stats->st_uid = getuid();	 //stuid is the owner of the file. ->Make this person who mounted the directory.
 	stats->st_gid = getgid();	 //owner group of the files or directories/subdirectories. ->Make this person who mounted the directory
 	stats->st_atime = time(NULL); //last acess time
 	stats->st_mtime = time(NULL); //last modification time
-
+	**/
+	/**
 	if (strcmp(path, "/") == 0) //Wil run first option if in root
 	{
-		stats->st_mode = S_IFDIR | 0755; //(check if file or dir) |(permission bits)        st_mode shows if is regular file, directior, other and permission bits of that file.
-		stats->st_nlink = 2;			 //Shows number of Hardlinks, Hardlinks, like copying a file but not a copy, a link to original file but modifying hardlink modifies original as well.
+		stats->st_mode = S_IfileDescriptorIR | 0755; //(check if file or dir) |(permission bits)        st_mode shows if is regular file, directior, other and permission bits of that file.
+		stats->st_nlink = 2;						 //Shows number of Hardlinks, Hardlinks, like copying a file but not a copy, a link to original file but modifying hardlink modifies original as well.
 
-		/*Seeing what S_IFDIR retunrs*/
-		//printf("CHECK Testing: \t%i", S_IFDIR);
-
-	} //Reason why twp hardlinks  https://unix.stackexchange.com/questions/101515/why-does-a-new-directory-have-a-hard-link-count-of-2-before-anything-is-added-to/101536#101536
-	else
+		//Seeing what S_IfileDescriptorIR retunrs
+		//printf("CHECK Testing: \t%i", S_IfileDescriptorIR);
+	
+	} **/
+	//Reason why twp hardlinks  https://unix.stackexchange.com/questions/101515/why-does-a-new-directory-have-a-hard-link-count-of-2-before-anything-is-added-to/101536#101536
+	/****else
 	{
 		stats->st_mode = S_IFREG | 0644;
 		stats->st_nlink = 1;
@@ -103,12 +178,56 @@ static int p2pGetAttr(const char *path, struct stat *stats)
 	}
 
 	return 0;
+	******/
 }
 
-//Only need first 3 params - Path of dir  - buffer - filler
-static int p2pDoReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+//Only need first 3 params - Path of dir  - buffer - filler (filler comes from fuse.h)
+static int p2pReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) //fuse fill dir t  Function to add an entry in a readdir() operation https://libfuse.github.io/doxygen/fuse_8h.html
 {
-	printf("--> Getting The List of Files of %s\n", path);
+	int returnStatus;
+	DIR *directoryPointer;		   //man opendir
+	struct dirent *directoryEntry; //man readdir
+
+	//log_msg("\nbb_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n",path, buf, filler, offset, fi);
+	logf("\np2pReadDir path=\"%s\",buffer=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n", path, buffer, filler, offset, fi);
+
+	// once again, no need for fullpath -- but note that I need to cast fi->fh
+	directoryPointer = (DIR *)(uintptr_t)fi->fh; //Type casting fi= file information we do this to use readdir() later on
+
+	// Every directory contains at least two entries: . and ..  If my
+	// first call to the system readdir() returns NULL I've got an
+	// error; near as I can tell, that's the only condition under
+	// which I can get an error from readdir()
+	directoryEntry = readdir(directoryPointer); //man readdir useful thanks to dirent.h
+	//log_msg("    readdir returned 0x%p\n", directoryEntry);
+	printf("Using readdir() function...\n readdir returned 0x%p\n", directoryEntry);
+
+	if (directoryEntry == 0)
+	{
+		returnStatus = p2pError("p2pReadDir readdir");
+		return returnStatus;
+	}
+
+	// This will copy the entire directory into the buffer.  The loop exits
+	// when either the system readdir() returns NULL, or filler()
+	// returns something non-zero.  The first case just means I've
+	// read the whole directory; the second means the buffer is full.
+	do
+	{
+		printf("calling filler with name %s\n", directoryEntry->d_name);
+		if (filler(buffer, directoryEntry->d_name, NULL, 0) != 0) //directoryEntry has name field   https://stackoverflow.com/questions/12991334/members-of-dirent-structure
+		{
+			log_msg("    ERROR bb_readdir filler:  buffer full");
+			printf("ERROR p2pReadDir filler:  buffer full");
+			return -ENOMEM; //Not enough core. Not enough memory is available for the attempted operator. https://docs.microsoft.com/en-us/cpp/c-runtime-library/errno-constants?view=vs-2019
+		}
+	} while ((directoryEntry = readdir(directoryPointer)) != NULL); //Read until readdir returns null
+
+	//log_fi(fi);
+
+	return returnStatus;
+
+	/**********************
 
 	//Path is is the path to current directory
 	//Buffer is what we will fill with names of files and directories in current location
@@ -126,9 +245,12 @@ static int p2pDoReadDir(const char *path, void *buffer, fuse_fill_dir_t filler, 
 	}
 
 	return 0; //returns 0 on success.
+
+	**********************/
 }
 
-static int p2pDoRead(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
+//Do next
+static int p2pRead(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	printf("--> Trying to read %s, %u, %u\n", path, offset, size);
 
@@ -152,21 +274,81 @@ static int p2pDoRead(const char *path, char *buffer, size_t size, off_t offset, 
 	return strlen(selectedText) - offset;
 }
 
+/********************
+		p2pOpen
+This is how filesystem opens files.
+Checks if has permission to create files.
+Can pass file handle to fuse_file_info structure
+which will then be passed to all of the file handling
+functions/
+
+Takes in path and file info from fuse in file info pointer
+********************/
+
+int p2pOpen(const char *path, struct fuse_file_info *fi) //from the fuse_file info structure we get the permission flags
+{
+	int returnStatus = 0;
+	int fileDescriptor;
+	char filePath[PATH_MAX]; //Path MAX(maximum string length of path provided by linux) https://stackoverflow.com/questions/9449241/where-is-path-max-defined-in-linux
+
+	//log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n", path, fi); logging this to a file.
+	printf("\np2pOpen: Opening File in Path \"%s\", with fi=0x%08x\n", path, fi);
+	p2pFullPath(filePath, path); //returns the fullpath concatenated
+
+	// if the open call succeeds, my returnStatus is the file descriptor,
+	// else it's -errno.  I'm making sure that in that case the saved
+	// file descriptor is exactly -1.
+	fileDescriptor = p2pSysCall("open", open(filePath, fi->flags), 0);
+	if (fileDescriptor < 0)
+	{
+		returnStatus = p2pError("open");
+	}
+	fi->fh = fileDescriptor; //Store fileDescriptor for later use
+							 //"File handle id. May be filled in by filesystem in create, open, and opendir().
+							 // Available in most other file operations on the same file handle.
+							 //"https://libfuse.github.io/doxygen/structfuse__file__info.html#a45314d0b92a8d4c9de33d996aa59ada8
+
+	//log_fi(fi);
+
+	return returnStatus;
+}
+
 static struct fuse_operations operations = {
 	.getattr = p2pGetAttr,
-	.readdir = p2pDoReadDir,
-	.read = p2pDoRead,
+	.readdir = p2pReadDir,
+	.read = p2pRead,
+	.open = p2pOpen,
 };
 
 int main(int argc, char *argv[])
 {
+
+	struct p2pState *p2pData; //We need to keep track of the state of our file system. Will save path here.
+
+	//Check the provided arguements in command line argc = number of arguements
+	//argv is the array of provided arguements.
+	if (argc < 1)
+	{
+		fprintf(stderr, "please provide a mounting point\n");
+		abort() //End program
+	}
+
+	//Don't allow user to run as Root. Major security issues.
+	if ((getuid() == 0) || (geteuid() == 0))
+	{
+		fprintf(stderr, "Can't Run Fuse File System as Root User! Security issues.\n");
+		return 1; //End Program
+	}
+
+	//Need to save some data
+	//For performance reasons instead of getting the path every single time we can construct it using a saved Root
+	p2pData->rootDir = realpath(argv[argc - 1], NULL);
+	print("Ceated Pointer to Path of Root Directory: %s", realpath(argv[argc - 1], NULL));
+
+	//bb_data->logfile = log_open();
+
 	//Check Fuse Version we are runnign
 	fprintf(stderr, "Checking Fuse Version... %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
 
-	//Don't allow user to run as Root. Major security issues.
-	if ((getuid() == 0) || (geteuid() == 0)) {
-    		fprintf(stderr, "Can't Run Fuse File System as Root User! Security issues.\n");
-    		return 1;
-    	}
 	return fuse_main(argc, argv, &operations, NULL);
 }
