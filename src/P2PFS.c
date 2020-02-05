@@ -344,6 +344,7 @@ int main(int argc, char *argv[])
 		return 1; //End Program
 	}
 
+	printf("Starting up FileSystem...");
 	//Need to save some data
 	//For performance reasons instead of getting the path every single time we can construct it using a saved Root
 	p2pData->rootDir = realpath(argv[argc - 1], NULL);
