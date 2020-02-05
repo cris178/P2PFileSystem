@@ -356,6 +356,8 @@ int main(int argc, char *argv[])
 	//-f is counted
 	printf("Arguements Count is %d\n", argc);
 	printf("Aguement Values are... %s %s %s\n", argv[0], argv[1], argv[2]);
+
+	//Need root directory which is index 2 or (3-1)
 	p2pData->rootDir = realpath(argv[argc - 1], NULL);
 	printf("Ceated Pointer to Path of Root Directory: %s\n", p2pData->rootDir);
 
@@ -363,5 +365,6 @@ int main(int argc, char *argv[])
 
 	//Check Fuse Version we are runnign
 	fprintf(stderr, "Checking Fuse Version... %d.%d\n", FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION);
+	return 0;
 	return fuse_main(argc, argv, &operations, NULL);
 }
