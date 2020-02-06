@@ -143,7 +143,7 @@ int p2pSysCall(char *func, int returnStatus, int min_ret)
 //return -1: with errno with correct errorcode
 static int p2pGetAttr(const char *path, struct stat *stats) //stats is a buffer
 {
-	/*
+	
 	int returnStatus;
 	char filePath[PATH_MAX];
 
@@ -155,8 +155,8 @@ static int p2pGetAttr(const char *path, struct stat *stats) //stats is a buffer
 	printf("We should be returning a 0 or 1 in getAttri %i", returnStatus);
 
 	return returnStatus;
-	*/
-
+	
+	/**
 	stats->st_uid = getuid();	 //stuid is the owner of the file. ->Make this person who mounted the directory.
 	stats->st_gid = getgid();	 //owner group of the files or directories/subdirectories. ->Make this person who mounted the directory
 	stats->st_atime = time(NULL); //last acess time
@@ -179,6 +179,7 @@ static int p2pGetAttr(const char *path, struct stat *stats) //stats is a buffer
 	}
 
 	return 0;
+	**/
 }
 
 //Only need first 3 params - Path of dir  - buffer - filler (filler comes from fuse.h)
