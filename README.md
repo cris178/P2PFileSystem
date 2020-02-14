@@ -41,7 +41,7 @@ Need Python3 to run the tests to see if FUSE is working
 * sudo apt-get install python3-pip
 * pip3 install --user pytest
 
-Then just follow instructions on libfuse github
+Then just follow instructions on libfuse github readMe
 until you see passing tests. Make sure a majority of the tests pass.
 
 Now your OS is ready to support a FUSE filesystem. 
@@ -51,26 +51,39 @@ Now your OS is ready to support a FUSE filesystem.
 ## Building the File System
 The src Folder contains the program for our FUSE file system. 
 
-In order to mount the file system build the program using gcc 
+Once in src just run the Make file using the command Make.
+Once refreFS wil be the program that will be ran in order
+to build the filesystem.
 
-* gcc P2PFS.c -o P2PFS `pkg-config fuse --cflags --libs`
+## Testing and Running
 
-Next you will run the program
-* ./P2PFS -f [mounting point]       -f is to see print statements while program is running
-                                    -mounting point is the name to an empty folder you select to turn into our FS
+Currently we are debugging the program using GDB. In order
+to run the program using GDB in the src folder hit the command
 
-The program will run displaying a bunch of print statements.
-Open another tab on your Terminal, hit ls -lr to see if the mounting point is now a file system.
-Also, you can check if a file system is created using the regular Ubuntu UI for the file explorer.
+* gdb refreshFS
+
+Once in the gdb environment you can run the command
+* file refreshFS
+
+This will allow you to set break points using the command 'b [line number]'.
+
+To skip the break points once entering gdb just enter
+
+ * run -s -d Mountdir
+ * -s: Runs the file system as a single thread program
+ * -d: Allows for debugging options
+ * Mountdir: is the name of the folder that will be tourned to our mounting point.
+
+ctrl c and q exits the program.
+
+
 
 
 To unmount use the instruction
 
-fusermount -u [mounting point]
+* fusermount -u [mounting point]
 
-or
 
-ctrl c on the first tab with the print statements.
 
 
 ## Resources
