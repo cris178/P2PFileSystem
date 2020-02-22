@@ -85,6 +85,50 @@ To unmount use the instruction
 
 
 
+## About the File System
+
+The base of our P2P file system started out from. LSYSFS, a less simple yet stupid file system.
+LSYSFS is a in memory(all files disapear on dismount) file system that is as simple as it gets, it reads only one directory level down. With 
+LSYSFS as a base we looked at how each function worked. What does each function need? What does it return?
+Having a basic understanding of how the file system worked we could then build on top of it by looking at 
+more feature complete file systems and how they handle routines that every file system needs. 
+
+
+### Pre Req Knowledge
+
+Before you dive in there are some things you must know.
+
+* Everything is a file, even am a file
+In Unix everything is a file. Yes that means a directory is a file too. 
+
+
+* Paths
+You need to know what's the difference between a relative path and an absolute path. 
+
+https://stackoverflow.com/questions/46121000/what-is-an-absolute-pathname-vs-a-relative-pathname
+
+Whenver you have to deal with an object(file or directory) in our filesystem, fuse will scan everything in a directory and return
+the path of files and directories. Say you want to write some file, Fuse will send a write request
+to our file system with the full path "/mountdir/filename". If your file is in the root of your file system it will look like "/filename".
+
+
+* Inodes
+Files and their contents are not stored together but are found together with their index position. The relationship will help us find the file and its contents. Inodes are a data structure in unix type file systemsthat describe a file or directory. Inodes store the attributes and disk block locations
+of the objects data. File-system object attributes may include metadata (times of last change, access, modification), as well as owner and permission data. Directories are lists of names assigned to inodes. A directory contains an entry for itself, its parent, and each of its children. As you have seen you can't create a directory or file of the same name because a list is maintaining each file and its unique name.
+
+https://en.wikipedia.org/wiki/Inode
+
+
+Below are the functions we explored and what they do.
+
+* getattr: 
+
+This function gets the file attributes. Basically it tells the OS if this is a file or directory. It's perhaps the first step that hapens in fuse, if you don't make an init function.
+"Also, it tells about the owner, group and permission bits of the object. This function is a vital one that without it we can’t have a functional filesystem"
+
+
+
+
 
 ## Resources
 

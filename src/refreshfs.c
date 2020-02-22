@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+
+int order = 0;
 // ... //
 //Each array can store 256 strings and each string has the maximum length of 256 bytes.
 //Names of directories created
@@ -114,7 +116,8 @@ void write_to_file( const char *path, const char *new_content )
 
 static int do_getattr( const char *path, struct stat *st )
 {
-	printf("getattr: Entered\n");
+	order = 0;
+	printf("-----------getattr: %i\n", order);
 	printf("File is %s\n", path);
 	st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
 	st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
@@ -142,6 +145,8 @@ static int do_getattr( const char *path, struct stat *st )
 
 static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi )
 {
+	order++;
+	printf("-----------do_readdir: %i\n", order);
 	filler( buffer, ".", NULL, 0 ); // Current Directory
 	filler( buffer, "..", NULL, 0 ); // Parent Directory
 	
@@ -160,6 +165,8 @@ static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, o
 
 static int do_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
 {
+	order++;
+	printf("-----------doread: %i\n", order);
 	int file_idx = get_file_index( path );
 	
 	if ( file_idx == -1 )
@@ -173,7 +180,9 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 }
 
 static int do_mkdir( const char *path, mode_t mode )
-{
+{	
+	order++;
+	printf("-----------domkdir: %i\n", order);
 	path++;
 	add_dir( path );
 	
@@ -182,6 +191,8 @@ static int do_mkdir( const char *path, mode_t mode )
 
 static int do_mknod( const char *path, mode_t mode, dev_t rdev )
 {
+	order++;
+	printf("-----------domaknod: %i\n", order);
 	path++;
 	add_file( path );
 	
@@ -190,6 +201,8 @@ static int do_mknod( const char *path, mode_t mode, dev_t rdev )
 
 static int do_write( const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *info )
 {
+	order++;
+	printf("-----------dowrite: %i\n", order);
 	write_to_file( path, buffer );
 	
 	return size;
