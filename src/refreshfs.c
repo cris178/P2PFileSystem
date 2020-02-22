@@ -65,6 +65,10 @@ void add_file( const char *filename )
 }
 
 
+
+//same as isDir() function we made above.
+//checks to see if its in our file system by checking our arrays.
+//IF WE WANT TO GET SUB DIRECTORIES WOULD NEED TO REMOVE "/" until objects name not just files
 int is_file( const char *path )
 {
 	path++; // Eliminating "/" in the path
@@ -76,6 +80,11 @@ int is_file( const char *path )
 	return 0;
 }
 
+
+//When we are given a path we need to get the associated index
+//of the file. 
+//We eliminate the /home/filename unimportant part to just get the name
+//We then look for the name in our array of files and return the index else return -1 file not in our array.
 int get_file_index( const char *path )
 {
 	path++; // Eliminating "/" in the path
@@ -87,6 +96,10 @@ int get_file_index( const char *path )
 	return -1;
 }
 
+
+//get path of the file you wish to write to and the content to be written
+//Get the index of where to write given the path. If file not found return -1.
+//else copy your new content into the filescostent with array index we just found.
 void write_to_file( const char *path, const char *new_content )
 {
 	int file_idx = get_file_index( path );
@@ -101,6 +114,8 @@ void write_to_file( const char *path, const char *new_content )
 
 static int do_getattr( const char *path, struct stat *st )
 {
+	printf("getattr: Entered\n");
+	printf("File is %s\n", path);
 	st->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
 	st->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
 	st->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
