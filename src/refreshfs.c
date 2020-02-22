@@ -30,13 +30,14 @@ static int do_getattr( const char *path, struct stat *st )
 	
 	struct stat buff;
 	int retstat;
-    //char fpath[PATH_MAX];
+    /*char fpath[PATH_MAX];
 	printf( "getattr: Entered\n" );
-	/*printf( "\tRelative Path Provided is %s\n", path );
+	printf( "\tRelative Path Provided is %s\n", path );
 	printf("getattr: Rootdir pulling %s\n", REFRESH_DATA->rootdir);
     strcpy(fpath, REFRESH_DATA->rootdir);
     strncat(fpath, path, PATH_MAX); // ridiculously long paths will break | full path not needed
-	printf("getattr: full path acquired %s\n",fpath);*/
+	printf("getattr: full path acquired %s\n",fpath);
+	*/
 	retstat = lstat(path,&buff);
 	printf("getattr: completed lstat() returning %d\n",retstat);
 	
@@ -83,6 +84,14 @@ int do_open(const char *path, struct fuse_file_info *fi)
     int retstat = 0;
     int fd;
     char fpath[PATH_MAX];
+
+	/*
+	printf( "\tRelative Path Provided is %s\n", path );
+	printf("getattr: Rootdir pulling %s\n", REFRESH_DATA->rootdir);
+    strcpy(fpath, REFRESH_DATA->rootdir);
+    strncat(path, path, PATH_MAX); // ridiculously long paths will break | full path not needed
+	printf("getattr: full path acquired %s\n",fpath);
+	*/
     
     //log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n",path, fi);
     //bb_fullpath(fpath, path);
@@ -178,9 +187,16 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 {
     DIR *dp;
     int returnstatus = 0;
-    //char fpath[PATH_MAX];
+    char fpath[PATH_MAX];
     
     printf("opendir: Entered open directory\n");
+
+	/*printf( "\tRelative Path Provided is %s\n", path );
+	printf("getattr: Rootdir pulling %s\n", REFRESH_DATA->rootdir);
+    strcpy(fpath, REFRESH_DATA->rootdir);
+    strncat(fpath, path, PATH_MAX); // ridiculously long paths will break | full path not needed
+	printf("getattr: full path acquired %s\n",fpath);*/
+
 	/*printf("opendir: Opendir pulling rootdir %s\n", REFRESH_DATA->rootdir);
     strcpy(fpath, REFRESH_DATA->rootdir);
     strncat(fpath, path, PATH_MAX); // ridiculously long paths will break | full path not needed
@@ -224,6 +240,16 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 	
 }
 
+void *do_init(struct fuse_conn_info *conn)
+{
+    printf("\ndo_init()\n");
+    
+    
+    //log_fuse_context(fuse_get_context());
+    
+    return REFRESH_DATA;
+}
+
 
 static struct fuse_operations operations = {
     .getattr	= do_getattr,
@@ -231,6 +257,7 @@ static struct fuse_operations operations = {
     .read		= do_read,
 	.open		= do_open,
 	.opendir 	= do_opendir,
+	.init = do_init,
 };
 
 
