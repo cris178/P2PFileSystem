@@ -11,24 +11,37 @@
 #include <errno.h>
 
 // ... //
-
+//Each array can store 256 strings and each string has the maximum length of 256 bytes.
+//Names of directories created
 char dir_list[ 256 ][ 256 ];
 int curr_dir_idx = -1;
 
+//Names of files created
 char files_list[ 256 ][ 256 ];
 int curr_file_idx = -1;
 
+//Maintains the contents of the files
 char files_content[ 256 ][ 256 ];
 int curr_file_content_idx = -1;
 
+
+//Initially no entries in each of the arrays so index -1
+
+
+//Incremeent directory index meaning one new directory created, put it in the dire list
 void add_dir( const char *dir_name )
 {
 	curr_dir_idx++;
 	strcpy( dir_list[ curr_dir_idx ], dir_name );
 }
 
+
+//Checks our directory array to see if given path, is it in the list of directories.
+//If it's in list it means that it's in our file system
+//Returns 1 if in list 0 if not
 int is_dir( const char *path )
 {
+	//Pointers are numbers to starting position of some array
 	path++; // Eliminating "/" in the path
 	
 	for ( int curr_idx = 0; curr_idx <= curr_dir_idx; curr_idx++ )
@@ -38,7 +51,10 @@ int is_dir( const char *path )
 	return 0;
 }
 
-
+//removes / and gets file name 
+//Notice curr file index and file contents related
+//files are related by index and contents
+//We created a file and initialize it to blank string, write is another function.
 void add_file( const char *filename )
 {
 	curr_file_idx++;
@@ -47,6 +63,7 @@ void add_file( const char *filename )
 	curr_file_content_idx++;
 	strcpy( files_content[ curr_file_content_idx ], "" );
 }
+
 
 int is_file( const char *path )
 {
