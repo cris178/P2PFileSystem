@@ -3,6 +3,7 @@
 
 #include <fuse.h>
 #include <dirent.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -10,6 +11,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+
+#define PATH_MAX 4096
 
 struct refreshfs_dirp
 {
@@ -126,6 +129,21 @@ static int do_getattr(const char *path, struct stat *st)
 	order = 0;
 	printf("-----------getattr: %i\n", order);
 	printf("File is %s\n", path);
+	printf("Mountdir Path name is: ");
+	/*
+	int returnStatus;
+	char fpath[PATH_MAX];
+
+	//form the absolute path to the file in question
+	strncpy(fpath, mountpoint.path);
+	strncat(fpath,path,PATH_MAX);
+	printf("Full absolute path created: %s\n", fpath);
+
+	*/
+	
+	
+
+	
 	st->st_uid = getuid();	 // The owner of the file/directory is the user who mounted the filesystem
 	st->st_gid = getgid();	 // The group of the file/directory is the same as the group of the user who mounted the filesystem
 	st->st_atime = time(NULL); // The last "a"ccess of the file/directory is right now
@@ -316,10 +334,10 @@ int main(int argc, char *argv[])
 
 	//Returns absolute path
 	mountpoint.path = realpath(argv[argc - 1], NULL);
-	testpath = fuse_mnt_resolve_path(strdup(argv[0]), argv[argc - 1]);
+	//testpath = fuse_mnt_resolve_path(strdup(argv[0]), argv[argc - 1]); returns same thing
 
-	printf("---------This is the realpath should be absolute: %s\n", mountpoint.path);
-	printf("---------This is the testpath should be: %s\n", testpath);
+	//printf("---------This is the realpath should be absolute: %s\n", mountpoint.path);
+	//printf("---------This is the testpath should be: %s\n", testpath);
 
 	mountpoint.dir = malloc(sizeof(struct refreshfs_dirp));
 	if (mountpoint.dir == NULL)
