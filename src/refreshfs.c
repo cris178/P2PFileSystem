@@ -136,8 +136,12 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 	// strncpy(fpath, mountpoint.path, PATH_MAX);
 	// strncat(fpath, path, PATH_MAX);
 
-	printf("in do_opendir path: %s\n", path);
-
+	// printf("in do_opendir path: %s\n", path);
+	if (strcmp(path, "/") != 0)
+	{
+	path++;
+	}
+	printf("in do_opendir path: %s", path);
     dp = opendir(path);
     // log_msg("    opendir returned 0x%p\n", dp);
     if (dp == NULL)
@@ -149,6 +153,10 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 	}
     fi->fh = (intptr_t) dp;
     
+	if(fi->fh == NULL)
+	{
+		printf("in do_opendir fi->fh is null\n");
+	}
     // log_fi(fi);
     
     return retstat;
