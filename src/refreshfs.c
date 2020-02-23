@@ -84,7 +84,7 @@ int do_open(const char *path, struct fuse_file_info *fi)
 {
 
 	order++;
-	printf("-----------do_open: %i\n", order);
+	printf("----------------------------------------------------------------------------------------------------------------------------do_open: %i\n", order);
 
     int retstat = 0;
     int fd;
@@ -98,8 +98,11 @@ int do_open(const char *path, struct fuse_file_info *fi)
     // else it's -errno.  I'm making sure that in that case the saved
     // file descriptor is exactly -1.
 
-
-	path++;
+	if (strcmp(path, "/") != 0)
+	{
+		path++;
+	}
+	// path++;
 	printf("in do_open path: %s", path);
     fd = open(path, fi->flags);
     if (fd < 0)
@@ -482,9 +485,50 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 {
 	order++;
 	printf("-----------domaknod: %i\n", order);
-	path++;
+	
 	add_file(path);
 
+	int retstat;
+    // char fpath[PATH_MAX];
+    
+    // log_msg("\nbb_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n",
+	//   path, mode, dev);
+    // bb_fullpath(fpath, path);
+    
+    // On Linux this could just be 'mknod(path, mode, dev)' but this
+    // tries to be be more portable by honoring the quote in the Linux
+    // mknod man page stating the only portable use of mknod() is to
+    // make a fifo, but saying it should never actually be used for
+    // that.
+	
+	
+	if (strcmp(path, "/") != 0)
+	{
+		path++;
+	}
+
+
+
+    if (S_ISREG(mode)) 
+	{
+		retstat = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
+		// if (retstat >= 0)
+		// {
+		// 	retstat = close(retstat);
+
+		// }
+	} 
+	// else
+	// {
+	// 	if (S_ISFIFO(mode))
+	// 	{
+	// 		retstat =mkfifo(path, mode);
+	// 	}
+	// 	else
+	// 	{
+	// 		retstat = mknod(path, mode, rdev);
+	// 	}
+	// }
 	return 0;
 }
 
@@ -513,6 +557,7 @@ static struct fuse_operations operations = {
 	.getattr = do_getattr,
 	.readdir = do_readdir,
 	.opendir = do_opendir,
+	.open = do_open,
 	.read = do_read,
 	.mkdir = do_mkdir,
 	.mknod = do_mknod,
