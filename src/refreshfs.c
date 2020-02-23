@@ -289,13 +289,36 @@ static int do_mkdir(const char *path, mode_t mode)
 
 	tempPath++;
 
+	char* fixed[PATH_MAX];
+	int slash = 0;
+	int size = strlen(tempPath);
+	int startSize = size;
+
+	while(size!=-1){
+		if(tempPath[size] == '/'){
+			slash = size;
+		}
+		size--;
+	}
+
+	if( !(tempPath == "/") )
+	{
+		++slash;
+	}
+
+	strncpy(fixed, tempPath+slash, startSize - slash);
+
+	// fixed++;
+
+
+	printf("fixed in mkdir: %s\n", fixed);
 	int returnStatus;
 	// char fpath[PATH_MAX];
 
 	// strncpy(fpath, mountpoint.path, PATH_MAX);
 	// strncat(fpath,path,PATH_MAX);
 
-	returnStatus = mkdir(tempPath, mode );
+	returnStatus = mkdir(fixed, mode );
 
 
 	if(returnStatus < 0)
