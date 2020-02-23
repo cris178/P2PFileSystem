@@ -80,6 +80,23 @@ int curr_file_content_idx = -1;
 // }
 
 
+
+int do_release(const char *path, struct fuse_file_info *fi)
+{
+//     log_msg("\nbb_release(path=\"%s\", fi=0x%08x)\n",
+// 	  path, fi);
+//     log_fi(fi);
+
+    // We need to close the file.  Had we allocated any resources
+    // (buffers etc) we'd need to free them here as well.
+
+	printf("in do_release---------------------------------------------------------------\n");
+
+    return close(fi->fh);
+}
+
+
+
 int do_open(const char *path, struct fuse_file_info *fi)
 {
 
@@ -355,8 +372,8 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 	int retstat = 0;
 	order++;
 	printf("-----------do_readdir: %i\n", order);
-	filler(buffer, ".", NULL, 0);  // Current Directory
-	filler(buffer, "..", NULL, 0); // Parent Directory
+	// filler(buffer, ".", NULL, 0);  // Current Directory
+	// filler(buffer, "..", NULL, 0); // Parent Directory
 
 	if (strcmp(path, "/") == 0) // If the user is trying to show the files/directories of the root directory show the following
 	{
@@ -512,24 +529,41 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
     if (S_ISREG(mode)) 
 	{
 		retstat = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
-		// if (retstat >= 0)
-		// {
-		// 	retstat = close(retstat);
+		if (retstat >= 0)
+		{
+			retstat = close(retstat);
+		}
 
-		// }
+		if (retstat < 0)
+		{
+			perror("Something went wrong in do_mknod S_ISREG: \n");
+			retstat = -errno;
+		}
 	} 
-	// else
-	// {
-	// 	if (S_ISFIFO(mode))
-	// 	{
-	// 		retstat =mkfifo(path, mode);
-	// 	}
-	// 	else
-	// 	{
-	// 		retstat = mknod(path, mode, rdev);
-	// 	}
-	// }
-	return 0;
+	else
+	{
+		if (S_ISFIFO(mode))
+		{
+			retstat =mkfifo(path, mode);
+			if (retstat < 0)
+			{
+				perror("Something went wrong in do_mknod S_ISFIFO: \n");
+				retstat = -errno;
+			}
+		}
+		else
+		{
+			retstat = mknod(path, mode, rdev);
+
+				perror("Something went wrong in do_mknod ELSE: \n");
+				retstat = -errno;
+		}
+	}
+
+
+
+
+	return retstat;
 }
 
 static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
@@ -562,6 +596,7 @@ static struct fuse_operations operations = {
 	.mkdir = do_mkdir,
 	.mknod = do_mknod,
 	.write = do_write,
+	.release = do_release,
 };
 
 char *fuse_mnt_resolve_path(const char *progname, const char *orig)
