@@ -51,32 +51,107 @@ int curr_file_content_idx = -1;
 
 
 
-const char *fixPath(const char *path, const int length)
+// const char *fixPath(const char *path, const int length)
+// {
+// 	//How to calll function
+// 	//fixPath(path, strlen(path));
+// 	char *fixed;
+// 	int slash = 0;
+// 	int size = length;
+
+// 	while (size != -1)
+// 	{
+// 		if (path[size] == '/')
+// 		{
+// 			slash = size;
+// 		}
+// 		size--;
+// 	}
+
+// 	if (path == '/' && length < 2)
+// 	{
+// 	}
+// 	else
+// 	{
+// 		strncpy(fixed, path + slash, size - slash);
+// 	}
+
+// 	return fixed;
+// }
+
+
+int do_open(const char *path, struct fuse_file_info *fi)
 {
-	//How to calll function
-	//fixPath(path, strlen(path));
-	char *fixed[PATH_MAX];
-	int slash = 0;
-	int size = length;
 
-	while (size != -1)
+	order++;
+	printf("-----------do_open: %i\n", order);
+
+    int retstat = 0;
+    int fd;
+    // char fpath[PATH_MAX];
+    
+    // log_msg("\nbb_open(path\"%s\", fi=0x%08x)\n",
+	//     path, fi);
+    // bb_fullpath(fpath, path);
+    
+    // if the open call succeeds, my retstat is the file descriptor,
+    // else it's -errno.  I'm making sure that in that case the saved
+    // file descriptor is exactly -1.
+
+
+	path++;
+	printf("in do_open path: %s", path);
+    fd = open(path, fi->flags);
+    if (fd < 0)
 	{
-		if (path[size] == '/')
-		{
-			slash = size;
-		}
-		size--;
+		perror("error in do_open");
+		retstat = -errno;
 	}
 
-	if (path == '/' && length < 2)
-	{
-	}
-	else
-	{
-		strncpy(fixed, path + slash, size - slash);
-	}
+    fi->fh = fd;
 
-	return fixed;
+    // log_fi(fi);
+    
+    return retstat;
+}
+
+
+int do_opendir(const char *path, struct fuse_file_info *fi)
+{
+	order++;
+	printf("-----------do_opendir: %i\n", order);
+
+    DIR *dp;
+    int retstat = 0;
+    char fpath[PATH_MAX];
+    
+    // log_msg("\nbb_opendir(path=\"%s\", fi=0x%08x)\n",
+	//   path, fi);
+    // bb_fullpath(fpath, path);
+
+    // since opendir returns a pointer, takes some custom handling of
+    // return status.
+
+	// ++path;
+	// strncpy(fpath, mountpoint.path, PATH_MAX);
+	// strncat(fpath, path, PATH_MAX);
+
+	printf("in do_opendir path: %s\n", path);
+
+    dp = opendir(path);
+    // log_msg("    opendir returned 0x%p\n", dp);
+    if (dp == NULL)
+	{
+		printf("in do_opendir dp is null\n");
+		// perror();
+		retstat = -errno;
+		// retstat = log_error("bb_opendir opendir");
+	}
+    fi->fh = (intptr_t) dp;
+    
+    // log_fi(fi);
+    
+    return retstat;
 }
 
 
@@ -152,6 +227,7 @@ int get_file_index(const char *path)
 //else copy your new content into the filescostent with array index we just found.
 void write_to_file(const char *path, const char *new_content)
 {
+	
 	int file_idx = get_file_index(path);
 
 	if (file_idx == -1) // No such file
@@ -265,6 +341,7 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 
 static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
+	int retstat = 0;
 	order++;
 	printf("-----------do_readdir: %i\n", order);
 	filler(buffer, ".", NULL, 0);  // Current Directory
@@ -279,7 +356,60 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 			filler(buffer, files_list[curr_idx], NULL, 0);
 	}
 
-	return 0;
+	else
+	{
+		
+		DIR *dp;
+		struct dirent *de;
+		
+		// log_msg("\nbb_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n",
+			// path, buf, filler, offset, fi);
+		// once again, no need for fullpath -- but note that I need to cast fi->fh
+
+		// printf("Before--------------------------\n");
+		dp = (DIR *) (uintptr_t) fi->fh;
+		// printf("After--------------------------\n");
+
+		if(dp == NULL)
+		{
+			printf("dp is null\n");
+		}
+		// print()
+
+		// Every directory contains at least two entries: . and ..  If my
+		// first call to the system readdir() returns NULL I've got an
+		// error; near as I can tell, that's the only condition under
+		// which I can get an error from readdir()
+
+		printf("Before--------------------------\n");
+		de = readdir(dp);
+		printf("After--------------------------\n");
+
+		if(de == 0)
+		{
+			return retstat; 
+		}
+
+
+	do 
+	{
+		// log_msg("calling filler with name %s\n", de->d_name);
+		if (filler(buffer, de->d_name, NULL, 0) != 0) 
+		{
+			// log_msg("    ERROR bb_readdir filler:  buffer full");
+			perror("error in readdir");
+			return -ENOMEM;
+		}
+    } 
+	while ((de = readdir(dp)) != NULL);
+    
+    // log_fi(fi);
+
+
+		// filler(buffer, de->d_name, NULL, 0);
+	// }
+	}
+	return retstat;
 }
 
 static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
@@ -303,7 +433,7 @@ static int do_mkdir(const char *path, mode_t mode)
 {
 
 
-char *tempPath = path;
+	char *tempPath = path;
 	// char* theFixedPath = fixPath(path, strlen(path));
 
 	// printf("theFixedPath: %s\n", theFixedPath);
@@ -323,7 +453,7 @@ char *tempPath = path;
 
 	tempPath++;
 
-	// printf("fixed in mkdir: %s\n", theFixedPath);
+	// printf("theFixedPath in mkdir: %s\n", theFixedPath);
 	int returnStatus;
 	// char fpath[PATH_MAX];
 
@@ -350,18 +480,31 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 	return 0;
 }
 
-static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *info)
+static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
+
+	int retstat = 0;
+
+	retstat = pwrite(fi->fh, buffer, size, offset);
+
+	if(retstat < 0)
+	{
+		perror("error in do_write ");
+		return -errno;
+	}
+
+
 	order++;
 	printf("-----------dowrite: %i\n", order);
 	write_to_file(path, buffer);
 
-	return size;
+	return retstat;
 }
 
 static struct fuse_operations operations = {
 	.getattr = do_getattr,
 	.readdir = do_readdir,
+	.opendir = do_opendir,
 	.read = do_read,
 	.mkdir = do_mkdir,
 	.mknod = do_mknod,
@@ -446,6 +589,13 @@ char *fuse_mnt_resolve_path(const char *progname, const char *orig)
 	return dst;
 }
 
+
+
+
+
+
+
+
 int main(int argc, char *argv[])
 {
 
@@ -473,6 +623,7 @@ int main(int argc, char *argv[])
 		return -ENOMEM;
 	}
 	mountpoint.dir->dp = opendir(mountpoint.path);
+
 
 	if ((mountpoint.fd = dirfd(mountpoint.dir->dp)) == -1)
 	{
