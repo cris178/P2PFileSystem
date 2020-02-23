@@ -569,6 +569,11 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 
+
+	order++;
+	printf("------------------------------------------------------------------------------------dowrite: %i\n", order);
+	write_to_file(path, buffer);
+
 	int retstat = 0;
 
 	retstat = pwrite(fi->fh, buffer, size, offset);
@@ -579,12 +584,25 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		return -errno;
 	}
 
+	
 
-	order++;
-	printf("-----------dowrite: %i\n", order);
-	write_to_file(path, buffer);
+
 
 	return retstat;
+
+
+
+	    // int retstat = 0;
+    
+    // log_msg("\nbb_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+	//     path, buf, size, offset, fi
+	//     );
+    // // no need to get fpath on this one, since I work from fi->fh not the path
+    // log_fi(fi);
+
+    // return pwrite(fi->fh, buffer, size, offset);
+
+	// return retstat;
 }
 
 static struct fuse_operations operations = {
