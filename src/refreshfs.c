@@ -147,15 +147,15 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	int returnStatus;
 	char fpath[PATH_MAX];
 
-	//form the absolute path to the file in question
-	printf("mountpoint path: %s\n", mountpoint.path);
-	printf("fpath: %s\n", fpath);
-	printf("path: %s\n", path);
+	// //form the absolute path to the file in question
+	// printf("mountpoint path: %s\n", mountpoint.path);
+	// printf("fpath: %s\n", fpath);
+	// printf("path: %s\n", path);
 
 	strncpy(fpath, mountpoint.path, PATH_MAX);
 	strncat(fpath,path,PATH_MAX);
 	
-	printf("AFTER\n\n");
+	printf("getattr after concatenate: \n");
 	printf("mountpoint path: %s\n", mountpoint.path);
 	printf("fpath: %s\n", fpath);
 	printf("path: %s\n", path);
@@ -166,17 +166,20 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	// lstat(fpath, st);
 
 
-	if(strcmp(path, "/") != 0)
+	if(strcmp(path, "/") == 0)
 	{
-		returnStatus = stat(tempPath, st);
 
-	}
-	else
-	{
 		st->st_mode = S_IFDIR | 0755;
 		st->st_nlink=2;
 		return 0;
 	}
+	
+	else
+	{
+		returnStatus = stat(tempPath, st);
+	}
+
+
 	
 	if(returnStatus < 0)
 	{
@@ -273,12 +276,34 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 static int do_mkdir(const char *path, mode_t mode)
 {
+	char* tempPath = path;
+
 	order++;
 	printf("-----------domkdir: %i\n", order);
 	path++;
 	add_dir(path);
 
-	return 0;
+
+	// char* tempPath2 = path;
+	
+
+	tempPath++;
+
+	int returnStatus;
+	// char fpath[PATH_MAX];
+
+	// strncpy(fpath, mountpoint.path, PATH_MAX);
+	// strncat(fpath,path,PATH_MAX);
+
+	returnStatus = mkdir(tempPath, mode );
+
+
+	if(returnStatus < 0)
+	{
+		perror("problem in mkdir: %s");
+		return -errno;
+	}
+	return returnStatus;
 }
 
 static int do_mknod(const char *path, mode_t mode, dev_t rdev)
