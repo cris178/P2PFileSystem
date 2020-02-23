@@ -134,7 +134,7 @@ The buffer is where we will fill the list of available files and directories tha
 
 Something to keep in mind is we need to get information about files in the directory which is where fuse_file_info comes into play. A file handle or fh in our case is a File Structure that may contain a file descrptor usually stating whether a file is open or not. https://unix.stackexchange.com/questions/146113/file-handles-and-filenames. We get a pointer to this file structure because fh is a file handle id. We call this pointer dp. The id fh now in dp is used as an index with the syscall readdir(dp) we can then return what the file handle id represents. A structure of type dirent contaning 
 
-struct dirent {
+    struct dirent {
 
                ino_t          d_ino;       /* Inode number */
                
@@ -149,13 +149,25 @@ struct dirent {
                                               
                char           d_name[256]; /* Null-terminated filename */
                
-};
+    };
 
 http://man7.org/linux/man-pages/man3/readdir.3.html
 
 We will call this pointer that we got from reddir() de short for directory entry. The first check is to see if the directory entry is null. If it's null something is wrong because every directory, as stated before should have "." and ".." as its first directory entries. Once we verify that the first de is not null we can loop and continue to use readdir(dp) for all of the entries until we reach the end which is null. In the loop we call filler, filling it with the de->dname and at the same time check if there are no errors.
 
-With that in mind lets refresh what we did in this function. We made a directory pointer dp and set it to fh(another fuse function sets up fh), then we use that fh(file handle id) that's in dp to read the directory which returns the directory entry structure above. We place the name of the directory entry in a filler and loop until we reach the end of dp. In short this function puts names of null terminated files in a filler.
+With that in mind lets refresh what we did in this function. We made a directory pointer dp and set it to fh(another fuse function sets up fh), then we use that fh(file handle id) that's in dp to read the directory which returns the directory entry structure above. We place the name of the directory entry in a filler and loop until we reach the end of dp. In short this function puts names of null terminated files in a filler. 
+
+You can see how this could be useful for a a file function like LS. In the current version of our file system and our existing fuse functions the order of operations when making an ls call in a terminal is 
+
+* getatr
+
+* opendir
+
+* getatr
+
+* readir
+
+The reasoning behind this is because getattr is always being called first, next the fh is setup by opendir, then getattr is called again, then readdir uses the fh to read the contents in the directory.
 
 
 
