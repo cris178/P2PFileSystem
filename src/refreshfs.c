@@ -48,6 +48,41 @@ int curr_file_content_idx = -1;
 
 //Initially no entries in each of the arrays so index -1
 
+
+
+
+const char *fixPath(const char *path, const int length)
+{
+	//How to calll function
+	//fixPath(path, strlen(path));
+	char *fixed[PATH_MAX];
+	int slash = 0;
+	int size = length;
+
+	while (size != -1)
+	{
+		if (path[size] == '/')
+		{
+			slash = size;
+		}
+		size--;
+	}
+
+	if (path == '/' && length < 2)
+	{
+	}
+	else
+	{
+		strncpy(fixed, path + slash, size - slash);
+	}
+
+	return fixed;
+}
+
+
+
+
+
 //Incremeent directory index meaning one new directory created, put it in the dire list
 void add_dir(const char *dir_name)
 {
@@ -263,38 +298,18 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	return strlen(content) - offset;
 }
 
-const char *fixPath(const char *path, const int length)
-{
-	//How to calll function
-	//fixPath(path, strlen(path));
-	char *fixed[PATH_MAX];
-	int slash = 0;
-	int size = length;
-
-	while (size != -1)
-	{
-		if (path[size] == '/')
-		{
-			slash = size;
-		}
-		size--;
-	}
-
-	if (path == '/' && length < 2)
-	{
-	}
-	else
-	{
-		strncpy(fixed, tempPath + slash, size - slash);
-	}
-
-	return fixed;
-}
 
 static int do_mkdir(const char *path, mode_t mode)
 {
 
-	char *tempPath = path;
+
+char *tempPath = path;
+	// char* theFixedPath = fixPath(path, strlen(path));
+
+	// printf("theFixedPath: %s\n", theFixedPath);
+
+	
+
 
 	order++;
 	printf("-----------domkdir: %i\n", order);
@@ -303,16 +318,19 @@ static int do_mkdir(const char *path, mode_t mode)
 
 	// char* tempPath2 = path;
 
-	fixPath(tempPath);
+	// fixPath(tempPath, );
 
-	printf("fixed in mkdir: %s\n", fixed);
+
+	tempPath++;
+
+	// printf("fixed in mkdir: %s\n", theFixedPath);
 	int returnStatus;
 	// char fpath[PATH_MAX];
 
 	// strncpy(fpath, mountpoint.path, PATH_MAX);
 	// strncat(fpath,path,PATH_MAX);
 
-	returnStatus = mkdir(fixed, mode);
+	returnStatus = mkdir(tempPath, mode);
 
 	if (returnStatus < 0)
 	{
