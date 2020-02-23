@@ -443,17 +443,36 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	order++;
-	printf("-----------doread: %i\n", order);
-	int file_idx = get_file_index(path);
+	printf("--------------------------------------------------------------------------------------------------------doread: %i\n", order);
+	// int file_idx = get_file_index(path);
 
-	if (file_idx == -1)
-		return -1;
+	// if (file_idx == -1)
+	// 	return -1;
 
-	char *content = files_content[file_idx];
+	// char *content = files_content[file_idx];
 
-	memcpy(buffer, content + offset, size);
+	// memcpy(buffer, content + offset, size);
 
-	return strlen(content) - offset;
+// return strlen(content) - offset;
+	int retstat = 0;
+
+	retstat = pread(fi->fh, buffer, size, offset);
+
+	if(retstat < 0)
+	{
+		perror("error in do_read ");
+		return -errno;
+	}
+
+	
+
+
+
+	return retstat;
+
+
+
+	
 }
 
 
