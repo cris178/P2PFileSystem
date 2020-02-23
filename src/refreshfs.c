@@ -136,11 +136,10 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	printf("-----------getattr: %i\n", order);
 	printf("File is %s\n", path);
 	// printf("Mountdir Path name is: ");
-	
-	char* tempPath = path;
+
+	char *tempPath = path;
 
 	tempPath++;
-
 
 	printf("tempPath: %s\n", tempPath);
 
@@ -153,57 +152,48 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	// printf("path: %s\n", path);
 
 	strncpy(fpath, mountpoint.path, PATH_MAX);
-	strncat(fpath,path,PATH_MAX);
-	
+	strncat(fpath, path, PATH_MAX);
+
 	printf("getattr after concatenate: \n");
 	printf("mountpoint path: %s\n", mountpoint.path);
 	printf("fpath: %s\n", fpath);
 	printf("path: %s\n", path);
 
-
 	printf("Full absolute path created: %s\n", fpath);
 
 	// lstat(fpath, st);
 
-
-	if(strcmp(path, "/") == 0)
+	if (strcmp(path, "/") == 0)
 	{
 
 		st->st_mode = S_IFDIR | 0755;
-		st->st_nlink=2;
+		st->st_nlink = 2;
 		return 0;
 	}
-	
+
 	else
 	{
 		returnStatus = stat(tempPath, st);
 	}
 
-
-	
-	if(returnStatus < 0)
+	if (returnStatus < 0)
 	{
 		perror("Something went wrong in do_getattr: \n");
 		returnStatus = -errno;
 	}
-	
-
-	
-
 
 	if (S_ISDIR(st->st_mode))
 	{
 		// st->st_mode = S_IFDIR | 0755;
 		// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
 		printf("Inode number %d\n", st->st_ino);
-		printf("is directory: %d\n", S_ISDIR(st->st_mode) ); 
+		printf("is directory: %d\n", S_ISDIR(st->st_mode));
 	}
 	else if (S_ISREG(st->st_mode))
 	{
 		// st->st_mode = S_IFREG | 0644;
 		// st->st_nlink = 1;
 		// st->st_size = 1024;
-
 
 		printf("File NOT directory\n");
 	}
@@ -213,7 +203,6 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	// }
 
 	return returnStatus;
-
 
 	// st->st_uid = getuid();	 // The owner of the file/directory is the user who mounted the filesystem
 	// st->st_gid = getgid();	 // The group of the file/directory is the same as the group of the user who mounted the filesystem
@@ -274,42 +263,47 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	return strlen(content) - offset;
 }
 
+const char *fixPath(const char *path, const int length)
+{
+	//How to calll function
+	//fixPath(path, strlen(path));
+	char *fixed[PATH_MAX];
+	int slash = 0;
+	int size = length;
+
+	while (size != -1)
+	{
+		if (path[size] == '/')
+		{
+			slash = size;
+		}
+		size--;
+	}
+
+	if (path == '/' && length < 2)
+	{
+	}
+	else
+	{
+		strncpy(fixed, tempPath + slash, size - slash);
+	}
+
+	return fixed;
+}
+
 static int do_mkdir(const char *path, mode_t mode)
 {
-	char* tempPath = path;
+
+	char *tempPath = path;
 
 	order++;
 	printf("-----------domkdir: %i\n", order);
 	path++;
 	add_dir(path);
 
-
 	// char* tempPath2 = path;
-	
 
-	tempPath++;
-
-	char* fixed[PATH_MAX];
-	int slash = 0;
-	int size = strlen(tempPath);
-	int startSize = size;
-
-	while(size!=-1){
-		if(tempPath[size] == '/'){
-			slash = size;
-		}
-		size--;
-	}
-
-	if( !(tempPath == "/") )
-	{
-		++slash;
-	}
-
-	strncpy(fixed, tempPath+slash, startSize - slash);
-
-	// fixed++;
-
+	fixPath(tempPath);
 
 	printf("fixed in mkdir: %s\n", fixed);
 	int returnStatus;
@@ -318,10 +312,9 @@ static int do_mkdir(const char *path, mode_t mode)
 	// strncpy(fpath, mountpoint.path, PATH_MAX);
 	// strncat(fpath,path,PATH_MAX);
 
-	returnStatus = mkdir(fixed, mode );
+	returnStatus = mkdir(fixed, mode);
 
-
-	if(returnStatus < 0)
+	if (returnStatus < 0)
 	{
 		perror("problem in mkdir: %s");
 		return -errno;
@@ -452,7 +445,6 @@ int main(int argc, char *argv[])
 	mountpoint.path = realpath(argv[argc - 1], NULL);
 	printf("MOUNTPATH GOT: %s\n", mountpoint.path);
 	//testpath = fuse_mnt_resolve_path(strdup(argv[0]), argv[argc - 1]); returns same thing
-
 
 	printf("---------This is the realpath should be absolute: %s\n", mountpoint.path);
 	//printf("---------This is the testpath should be: %s\n", testpath);
