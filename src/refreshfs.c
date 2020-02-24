@@ -385,17 +385,25 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	printf("File is %s\n", path);
 	// printf("Mountdir Path name is: ");
 
-	char *tempPath = path;
+	//char *tempPath = path;
 
 
-	if(path != '/'){
-		tempPath++;
-	}
-	
+	// if (strcmp(path, "/") != 0)
+	// {
+		//tempPath++;
+	// tempPath = mountpoint.path;
+	// }
 
-	printf("tempPath: %s\n", tempPath);
+	printf("Path passed %s\n", path);
 
 	int returnStatus = 0;
+	if (strcmp(path, "/") != 0)
+	{
+		path++;
+		returnStatus = stat(path, st);
+	}else{
+		returnStatus = stat("MountDIR", st);
+	}
 	//char fpath[PATH_MAX];
 
 	// //form the absolute path to the file in question
@@ -416,40 +424,54 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	*/
 	// lstat(fpath, st);
 
+	// if (strcmp(path, "/") == 0)
+	// {
+
+	// 	st->st_mode = S_IFDIR | 0755;
+	// 	st->st_nlink = 2;
+	// 	return 0;
+	// }
+
+	// else
+	// {
+
+	//char tPath[256];
+	/*
 	if (strcmp(path, "/") == 0)
 	{
+		getcwd(tPath,  256);
+		tPath++;
+		printf("CURRENT DIRECT--------------------------------------------------------------------%s\n", tPath);
+		returnStatus = stat(tPath, st);
 
-		st->st_mode = S_IFDIR | 0755;
-		st->st_nlink = 2;
-		return 0;
-	}
-
-	else
-	{
+	}else{
 		returnStatus = stat(tempPath, st);
 	}
-
+	*/
+		
+	// }
+	
 	if (returnStatus < 0)
 	{
 		perror("Something went wrong in do_getattr: \n");
 		returnStatus = -errno;
 	}
 
-	if (S_ISDIR(st->st_mode))
-	{
-		// st->st_mode = S_IFDIR | 0755;
-		// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
-		printf("---Inode number %d\n", st->st_ino);
-		printf("---is directory: %d\n", S_ISDIR(st->st_mode));
-	}
-	else if (S_ISREG(st->st_mode))
-	{
-		// st->st_mode = S_IFREG | 0644;
-		// st->st_nlink = 1;
-		// st->st_size = 1024;
+	// if (S_ISDIR(st->st_mode))
+	// {
+	// 	// st->st_mode = S_IFDIR | 0755;
+	// 	// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+	// 	printf("---Inode number %d\n", st->st_ino);
+	// 	printf("---is directory: %d\n", S_ISDIR(st->st_mode));
+	// }
+	// else if (S_ISREG(st->st_mode))
+	// {
+	// 	// st->st_mode = S_IFREG | 0644;
+	// 	// st->st_nlink = 1;
+	// 	// st->st_size = 1024;
 
-		printf("---File NOT directory\n");
-	}
+	// 	printf("---File NOT directory\n");
+	// }
 	// else
 	// {
 	// 	return -ENOENT;
