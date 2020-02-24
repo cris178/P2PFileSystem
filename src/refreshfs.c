@@ -14,6 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #define PATH_MAX 4096
 
@@ -32,6 +33,7 @@ static struct mountpoint
 } mountpoint;
 
 int order = 0;
+/*
 // ... //
 //Each array can store 256 strings and each string has the maximum length of 256 bytes.
 //Names of directories created
@@ -47,7 +49,7 @@ char files_content[256][256];
 int curr_file_content_idx = -1;
 
 //Initially no entries in each of the arrays so index -1
-
+*/
 
 
 
@@ -81,6 +83,111 @@ int curr_file_content_idx = -1;
 
 
 
+
+
+
+int do_releasedir(const char *path, struct fuse_file_info *fi)
+{
+    // int retstat = 0;
+    
+    // log_msg("\nbb_releasedir(path=\"%s\", fi=0x%08x)\n",
+	//     path, fi);
+    // log_fi(fi);
+    
+    
+    printf("--------------------------------------------------------------inreleasedir\n");
+
+	// if (strcmp(path, "/") != 0)
+	// {
+	// 	path++;
+	// }
+
+	
+
+    // return retstat;
+
+	// unlinkat(fi->fh, path, AT_REMOVEDIR );
+	closedir((DIR *) (uintptr_t) fi->fh);
+	return 0;
+}
+
+/** Remove a file */
+int do_unlink(const char *path)
+{
+    // char fpath[PATH_MAX];
+    
+    // log_msg("bb_unlink(path=\"%s\")\n",
+	//     path);
+    // bb_fullpath(fpath, path);
+
+	order++;
+	printf("---------------------------------------------------------------in do_unlink: %i\n", order);
+	if (strcmp(path, "/") != 0)
+	{
+		path++;
+	}
+
+
+
+	int retstat = 0;
+	
+	retstat = unlink(path);
+
+
+			if (retstat < 0)
+			{
+				perror("Something went wrong in do_unlink: \n");
+				retstat = -errno;
+			}
+
+
+	return retstat; 
+}
+
+/** Remove a directory */
+int do_rmdir(const char *path)
+{
+    // char fpath[PATH_MAX];
+    
+    // log_msg("bb_rmdir(path=\"%s\")\n",
+	//     path);
+    // bb_fullpath(fpath, path);
+
+	order++;
+	printf("---------------------------------------------------------------in do_rmdir: %i\n", order);
+
+	if (strcmp(path, "/") != 0)
+	{
+		path++;
+	}
+
+
+
+		int retstat = 0;
+	
+
+    // char fpath[256];
+
+	// strncpy(fpath, mountpoint.path, 256);
+	// strncat(fpath, path, 256);
+
+	printf("in do_rmdir path----------------------------------------------------------:%s---------------\n", path);
+
+	retstat = rmdir(path);
+
+
+			if (retstat < 0)
+			{
+				perror("Something went wrong in do_rmdir: \n");
+				retstat = -errno;
+			}
+
+
+	return retstat; 
+}
+
+
+
 int do_release(const char *path, struct fuse_file_info *fi)
 {
 //     log_msg("\nbb_release(path=\"%s\", fi=0x%08x)\n",
@@ -89,8 +196,8 @@ int do_release(const char *path, struct fuse_file_info *fi)
 
     // We need to close the file.  Had we allocated any resources
     // (buffers etc) we'd need to free them here as well.
-
-	printf("in do_release---------------------------------------------------------------\n");
+	order++;
+	printf("---------------------------------------------------------------in do_release: %i\n", order);
 
     return close(fi->fh);
 }
@@ -185,7 +292,7 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 
 
 
-
+/*
 //Incremeent directory index meaning one new directory created, put it in the dire list
 void add_dir(const char *dir_name)
 {
@@ -264,6 +371,8 @@ void write_to_file(const char *path, const char *new_content)
 	strcpy(files_content[file_idx], new_content);
 }
 
+*/
+
 // ... //
 
 static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *fi)
@@ -278,18 +387,23 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 
 	char *tempPath = path;
 
-	tempPath++;
+
+	if(path != '/'){
+		tempPath++;
+	}
+	
 
 	printf("tempPath: %s\n", tempPath);
 
-	int returnStatus;
-	char fpath[PATH_MAX];
+	int returnStatus = 0;
+	//char fpath[PATH_MAX];
 
 	// //form the absolute path to the file in question
 	// printf("mountpoint path: %s\n", mountpoint.path);
 	// printf("fpath: %s\n", fpath);
 	// printf("path: %s\n", path);
 
+	/*
 	strncpy(fpath, mountpoint.path, PATH_MAX);
 	strncat(fpath, path, PATH_MAX);
 
@@ -299,7 +413,7 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	printf("path: %s\n", path);
 
 	printf("Full absolute path created: %s\n", fpath);
-
+	*/
 	// lstat(fpath, st);
 
 	if (strcmp(path, "/") == 0)
@@ -325,8 +439,8 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 	{
 		// st->st_mode = S_IFDIR | 0755;
 		// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
-		printf("Inode number %d\n", st->st_ino);
-		printf("is directory: %d\n", S_ISDIR(st->st_mode));
+		printf("---Inode number %d\n", st->st_ino);
+		printf("---is directory: %d\n", S_ISDIR(st->st_mode));
 	}
 	else if (S_ISREG(st->st_mode))
 	{
@@ -334,7 +448,7 @@ static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *
 		// st->st_nlink = 1;
 		// st->st_size = 1024;
 
-		printf("File NOT directory\n");
+		printf("---File NOT directory\n");
 	}
 	// else
 	// {
@@ -375,18 +489,22 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 	// filler(buffer, ".", NULL, 0);  // Current Directory
 	// filler(buffer, "..", NULL, 0); // Parent Directory
 
+	/*
 	if (strcmp(path, "/") == 0) // If the user is trying to show the files/directories of the root directory show the following
 	{
+		
 		for (int curr_idx = 0; curr_idx <= curr_dir_idx; curr_idx++)
 			filler(buffer, dir_list[curr_idx], NULL, 0);
 
 		for (int curr_idx = 0; curr_idx <= curr_file_idx; curr_idx++)
 			filler(buffer, files_list[curr_idx], NULL, 0);
+		
+		return 0;
 	}
 
 	else
 	{
-		
+		*/
 		DIR *dp;
 		struct dirent *de;
 		
@@ -436,7 +554,7 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 
 		// filler(buffer, de->d_name, NULL, 0);
 	// }
-	}
+	//}
 	return retstat;
 }
 
@@ -491,7 +609,7 @@ static int do_mkdir(const char *path, mode_t mode)
 	order++;
 	printf("-----------domkdir: %i\n", order);
 	path++;
-	add_dir(path);
+	//add_dir(path);
 
 	// char* tempPath2 = path;
 
@@ -522,7 +640,7 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 	order++;
 	printf("-----------domaknod: %i\n", order);
 	
-	add_file(path);
+	//add_file(path);
 
 	int retstat;
     // char fpath[PATH_MAX];
@@ -591,7 +709,7 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 
 	order++;
 	printf("------------------------------------------------------------------------------------dowrite: %i\n", order);
-	write_to_file(path, buffer);
+	//write_to_file(path, buffer);
 
 	int retstat = 0;
 
@@ -634,6 +752,9 @@ static struct fuse_operations operations = {
 	.mknod = do_mknod,
 	.write = do_write,
 	.release = do_release,
+	.unlink = do_unlink,
+	.rmdir = do_rmdir,
+	.releasedir = do_releasedir,
 };
 
 char *fuse_mnt_resolve_path(const char *progname, const char *orig)
