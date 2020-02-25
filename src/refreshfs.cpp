@@ -18,21 +18,11 @@
 
 #include <iostream>
 
+// #include <opendht.h>
+
 #define PATH_MAX 4096
 
-struct refreshfs_dirp
-{
-	DIR *dp;
-	struct dirent *entry;
-	off_t offset;
-};
 
-static struct mountpoint
-{
-	int fd;
-	struct refreshfs_dirp *dir;
-	char *path;
-} mountpoint;
 
 int order = 0;
 /*
@@ -801,91 +791,6 @@ static struct hello_fuse_operations:fuse_operations
 
 
 
-char *fuse_mnt_resolve_path(const char *progname, const char *orig)
-{
-	char buf[PATH_MAX];
-	char *copy;
-	char *dst;
-	char *end;
-	char *lastcomp;
-	const char *toresolv;
-
-	if (!orig[0])
-	{
-		fprintf(stderr, "%s: invalid mountpoint '%s'\n", progname,
-				orig);
-		return NULL;
-	}
-
-	copy = strdup(orig);
-	if (copy == NULL)
-	{
-		fprintf(stderr, "%s: failed to allocate memory\n", progname);
-		return NULL;
-	}
-
-	toresolv = copy;
-	lastcomp = NULL;
-	for (end = copy + strlen(copy) - 1; end > copy && *end == '/'; end--)
-		;
-	if (end[0] != '/')
-	{
-		char *tmp;
-		end[1] = '\0';
-		tmp = strrchr(copy, '/');
-		if (tmp == NULL)
-		{
-			lastcomp = copy;
-			toresolv = ".";
-		}
-		else
-		{
-			lastcomp = tmp + 1;
-			if (tmp == copy)
-				toresolv = "/";
-		}
-		if (strcmp(lastcomp, ".") == 0 || strcmp(lastcomp, "..") == 0)
-		{
-			lastcomp = NULL;
-			toresolv = copy;
-		}
-		else if (tmp)
-			tmp[0] = '\0';
-	}
-	if (realpath(toresolv, buf) == NULL)
-	{
-		fprintf(stderr, "%s: bad mount point %s: %s\n", progname, orig,
-				strerror(errno));
-		free(copy);
-		return NULL;
-	}
-	if (lastcomp == NULL)
-		dst = strdup(buf);
-	else
-	{
-		dst = (char *)malloc(strlen(buf) + 1 + strlen(lastcomp) + 1);
-		if (dst)
-		{
-			unsigned buflen = strlen(buf);
-			if (buflen && buf[buflen - 1] == '/')
-				sprintf(dst, "%s%s", buf, lastcomp);
-			else
-				sprintf(dst, "%s/%s", buf, lastcomp);
-		}
-	}
-	free(copy);
-	if (dst == NULL)
-		fprintf(stderr, "%s: failed to allocate memory\n", progname);
-	return dst;
-}
-
-
-
-
-
-
-
-
 int main(int argc, char *argv[])
 {
 
@@ -904,37 +809,16 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	//Returns absolute path
-	mountpoint.path = realpath(argv[argc - 1], NULL);
-	printf("MOUNTPATH GOT: %s\n", mountpoint.path);
-	//testpath = fuse_mnt_resolve_path(strdup(argv[0]), argv[argc - 1]); returns same thing
-
-	printf("---------This is the realpath should be absolute: %s\n", mountpoint.path);
-	//printf("---------This is the testpath should be: %s\n", testpath);
-
-	// mountpoint.dir = malloc(sizeof(struct refreshfs_dirp));
-	if (mountpoint.dir == NULL)
-	{ //Not enough memory
-		return -ENOMEM;
-	}
-	mountpoint.dir->dp = opendir(mountpoint.path);
+	
 
 
-	if ((mountpoint.fd = dirfd(mountpoint.dir->dp)) == -1)
-	{
-		fprintf(stderr, "error: %s\n", strerror(errno));
-		return -1;
-	}
-	mountpoint.dir->offset = 0;
-	mountpoint.dir->entry = NULL;
 
 	// closedir(mountpoint.dir->dp);
 	// free(mountpoint.path);
 
 	returnStatus = fuse_main(argc, argv, &operations, NULL);
 
-	closedir(mountpoint.dir->dp);
-	free(mountpoint.path);
+
 
 	return returnStatus;
 
