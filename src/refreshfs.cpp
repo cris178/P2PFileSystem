@@ -14,18 +14,24 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <fcntl.h>
-
-#include <iostream>
-
-// #include <opendht.h>
 
 #define PATH_MAX 4096
 
+struct refreshfs_dirp
+{
+	DIR *dp;
+	struct dirent *entry;
+	off_t offset;
+};
 
+static struct mountpoint
+{
+	int fd;
+	struct refreshfs_dirp *dir;
+	char *path;
+} mountpoint;
 
 int order = 0;
-/*
 // ... //
 //Each array can store 256 strings and each string has the maximum length of 256 bytes.
 //Names of directories created
@@ -41,7 +47,7 @@ char files_content[256][256];
 int curr_file_content_idx = -1;
 
 //Initially no entries in each of the arrays so index -1
-*/
+
 
 
 
@@ -75,111 +81,6 @@ int curr_file_content_idx = -1;
 
 
 
-
-
-
-int do_releasedir(const char *path, struct fuse_file_info *fi)
-{
-    // int retstat = 0;
-    
-    // log_msg("\nbb_releasedir(path=\"%s\", fi=0x%08x)\n",
-	//     path, fi);
-    // log_fi(fi);
-    
-    
-    printf("--------------------------------------------------------------inreleasedir\n");
-
-	// if (strcmp(path, "/") != 0)
-	// {
-	// 	path++;
-	// }
-
-	
-
-    // return retstat;
-
-	// unlinkat(fi->fh, path, AT_REMOVEDIR );
-	closedir((DIR *) (uintptr_t) fi->fh);
-	return 0;
-}
-
-/** Remove a file */
-int do_unlink(const char *path)
-{
-    // char fpath[PATH_MAX];
-    
-    // log_msg("bb_unlink(path=\"%s\")\n",
-	//     path);
-    // bb_fullpath(fpath, path);
-
-	order++;
-	printf("---------------------------------------------------------------in do_unlink: %i\n", order);
-	if (strcmp(path, "/") != 0)
-	{
-		path++;
-	}
-
-
-
-	int retstat = 0;
-	
-	retstat = unlink(path);
-
-
-			if (retstat < 0)
-			{
-				perror("Something went wrong in do_unlink: \n");
-				retstat = -errno;
-			}
-
-
-	return retstat; 
-}
-
-/** Remove a directory */
-int do_rmdir(const char *path)
-{
-    // char fpath[PATH_MAX];
-    
-    // log_msg("bb_rmdir(path=\"%s\")\n",
-	//     path);
-    // bb_fullpath(fpath, path);
-
-	order++;
-	printf("---------------------------------------------------------------in do_rmdir: %i\n", order);
-
-	if (strcmp(path, "/") != 0)
-	{
-		path++;
-	}
-
-
-
-		int retstat = 0;
-	
-
-    // char fpath[256];
-
-	// strncpy(fpath, mountpoint.path, 256);
-	// strncat(fpath, path, 256);
-
-	printf("in do_rmdir path----------------------------------------------------------:%s---------------\n", path);
-
-	retstat = rmdir(path);
-
-
-			if (retstat < 0)
-			{
-				perror("Something went wrong in do_rmdir: \n");
-				retstat = -errno;
-			}
-
-
-	return retstat; 
-}
-
-
-
 int do_release(const char *path, struct fuse_file_info *fi)
 {
 //     log_msg("\nbb_release(path=\"%s\", fi=0x%08x)\n",
@@ -188,8 +89,8 @@ int do_release(const char *path, struct fuse_file_info *fi)
 
     // We need to close the file.  Had we allocated any resources
     // (buffers etc) we'd need to free them here as well.
-	order++;
-	printf("---------------------------------------------------------------in do_release: %i\n", order);
+
+	printf("in do_release---------------------------------------------------------------\n");
 
     return close(fi->fh);
 }
@@ -284,7 +185,7 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 
 
 
-/*
+
 //Incremeent directory index meaning one new directory created, put it in the dire list
 void add_dir(const char *dir_name)
 {
@@ -363,11 +264,7 @@ void write_to_file(const char *path, const char *new_content)
 	strcpy(files_content[file_idx], new_content);
 }
 
-*/
-
 // ... //
-
-
 
 static int do_getattr(const char *path, struct stat *st)
 {
@@ -386,22 +283,22 @@ static int do_getattr(const char *path, struct stat *st)
 	printf("tempPath: %s\n", tempPath);
 
 	int returnStatus;
-	// char fpath[PATH_MAX];
+	char fpath[PATH_MAX];
 
 	// //form the absolute path to the file in question
 	// printf("mountpoint path: %s\n", mountpoint.path);
 	// printf("fpath: %s\n", fpath);
 	// printf("path: %s\n", path);
 
-	// strncpy(fpath, mountpoint.path, PATH_MAX);
-	// strncat(fpath, path, PATH_MAX);
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
 
 	printf("getattr after concatenate: \n");
-	// printf("mountpoint path: %s\n", mountpoint.path);
-	// printf("fpath: %s\n", fpath);
+	printf("mountpoint path: %s\n", mountpoint.path);
+	printf("fpath: %s\n", fpath);
 	printf("path: %s\n", path);
 
-	// printf("Full absolute path created: %s\n", fpath);
+	printf("Full absolute path created: %s\n", fpath);
 
 	// lstat(fpath, st);
 
@@ -470,138 +367,6 @@ static int do_getattr(const char *path, struct stat *st)
 	// return 0;
 }
 
-
-
-
-
-// static int do_getattr(const char *path, struct stat *st)
-// {
-
-// 	printf("Path is: %s: \n", path);
-// 	// printf("Path dereferenced is: %s \n", *path);
-// 	order = 0;
-// 	printf("-----------getattr: %i\n", order);
-// 	printf("File is %s\n", path);
-// 	// printf("Mountdir Path name is: ");
-
-// 	//char *tempPath = path;
-
-
-// 	// if (strcmp(path, "/") != 0)
-// 	// {
-// 		//tempPath++;
-// 	// tempPath = mountpoint.path;
-// 	// }
-
-// 	printf("Path passed %s\n", path);
-
-// 	int returnStatus = 0;
-// 	if (strcmp(path, "/") != 0)
-// 	{
-// 		path++;
-// 		returnStatus = stat(path, st);
-// 	}else{
-// 		returnStatus = stat("MountDIR", st);
-// 	}
-// 	//char fpath[PATH_MAX];
-
-// 	// //form the absolute path to the file in question
-// 	// printf("mountpoint path: %s\n", mountpoint.path);
-// 	// printf("fpath: %s\n", fpath);
-// 	// printf("path: %s\n", path);
-
-// 	/*
-// 	strncpy(fpath, mountpoint.path, PATH_MAX);
-// 	strncat(fpath, path, PATH_MAX);
-
-// 	printf("getattr after concatenate: \n");
-// 	printf("mountpoint path: %s\n", mountpoint.path);
-// 	printf("fpath: %s\n", fpath);
-// 	printf("path: %s\n", path);
-
-// 	printf("Full absolute path created: %s\n", fpath);
-// 	*/
-// 	// lstat(fpath, st);
-
-// 	// if (strcmp(path, "/") == 0)
-// 	// {
-
-// 	// 	st->st_mode = S_IFDIR | 0755;
-// 	// 	st->st_nlink = 2;
-// 	// 	return 0;
-// 	// }
-
-// 	// else
-// 	// {
-
-// 	//char tPath[256];
-// 	/*
-// 	if (strcmp(path, "/") == 0)
-// 	{
-// 		getcwd(tPath,  256);
-// 		tPath++;
-// 		printf("CURRENT DIRECT--------------------------------------------------------------------%s\n", tPath);
-// 		returnStatus = stat(tPath, st);
-
-// 	}else{
-// 		returnStatus = stat(tempPath, st);
-// 	}
-// 	*/
-		
-// 	// }
-	
-// 	if (returnStatus < 0)
-// 	{
-// 		perror("Something went wrong in do_getattr: \n");
-// 		returnStatus = -errno;
-// 	}
-
-// 	// if (S_ISDIR(st->st_mode))
-// 	// {
-// 	// 	// st->st_mode = S_IFDIR | 0755;
-// 	// 	// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
-// 	// 	printf("---Inode number %d\n", st->st_ino);
-// 	// 	printf("---is directory: %d\n", S_ISDIR(st->st_mode));
-// 	// }
-// 	// else if (S_ISREG(st->st_mode))
-// 	// {
-// 	// 	// st->st_mode = S_IFREG | 0644;
-// 	// 	// st->st_nlink = 1;
-// 	// 	// st->st_size = 1024;
-
-// 	// 	printf("---File NOT directory\n");
-// 	// }
-// 	// else
-// 	// {
-// 	// 	return -ENOENT;
-// 	// }
-
-// 	return returnStatus;
-
-// 	// st->st_uid = getuid();	 // The owner of the file/directory is the user who mounted the filesystem
-// 	// st->st_gid = getgid();	 // The group of the file/directory is the same as the group of the user who mounted the filesystem
-// 	// st->st_atime = time(NULL); // The last "a"ccess of the file/directory is right now
-// 	// st->st_mtime = time(NULL); // The last "m"odification of the file/directory is right now
-
-// 	// if (strcmp(path, "/") == 0 || is_dir(path) == 1)
-// 	// {
-// 	// 	st->st_mode = S_IFDIR | 0755;
-// 	// 	st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
-// 	// }
-// 	// else if (is_file(path) == 1)
-// 	// {
-// 	// 	st->st_mode = S_IFREG | 0644;
-// 	// 	st->st_nlink = 1;
-// 	// 	st->st_size = 1024;
-// 	// }
-// 	// else
-// 	// {
-// 	// 	return -ENOENT;
-// 	// }
-
-// 	// return 0;
-// }
-
 static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
 	int retstat = 0;
@@ -610,22 +375,18 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 	// filler(buffer, ".", NULL, 0);  // Current Directory
 	// filler(buffer, "..", NULL, 0); // Parent Directory
 
-	/*
 	if (strcmp(path, "/") == 0) // If the user is trying to show the files/directories of the root directory show the following
 	{
-		
 		for (int curr_idx = 0; curr_idx <= curr_dir_idx; curr_idx++)
 			filler(buffer, dir_list[curr_idx], NULL, 0);
 
 		for (int curr_idx = 0; curr_idx <= curr_file_idx; curr_idx++)
 			filler(buffer, files_list[curr_idx], NULL, 0);
-		
-		return 0;
 	}
 
 	else
 	{
-		*/
+		
 		DIR *dp;
 		struct dirent *de;
 		
@@ -675,7 +436,7 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 
 		// filler(buffer, de->d_name, NULL, 0);
 	// }
-	//}
+	}
 	return retstat;
 }
 
@@ -730,7 +491,7 @@ static int do_mkdir(const char *path, mode_t mode)
 	order++;
 	printf("-----------domkdir: %i\n", order);
 	path++;
-	//add_dir(path);
+	add_dir(path);
 
 	// char* tempPath2 = path;
 
@@ -761,7 +522,7 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 	order++;
 	printf("-----------domaknod: %i\n", order);
 	
-	//add_file(path);
+	add_file(path);
 
 	int retstat;
     // char fpath[PATH_MAX];
@@ -830,7 +591,7 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 
 	order++;
 	printf("------------------------------------------------------------------------------------dowrite: %i\n", order);
-	//write_to_file(path, buffer);
+	write_to_file(path, buffer);
 
 	int retstat = 0;
 
@@ -865,18 +626,6 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 
 
 
-// struct hello_fuse_operations:fuse_operations
-// {
-//     hello_fuse_operations ()
-//     {
-//         getattr    = hello_getattr;
-//         readdir    = hello_readdir;
-//         open       = hello_open;
-//         read       = hello_read;
-//     }
-// }
-
-
 static struct hello_fuse_operations:fuse_operations 
 {
 	hello_fuse_operations()
@@ -890,21 +639,96 @@ static struct hello_fuse_operations:fuse_operations
 	mknod = do_mknod;
 	write = do_write;
 	release = do_release;
-	unlink = do_unlink;
-	rmdir = do_rmdir;
-	releasedir = do_releasedir;
 	}
 } operations;
+
+char *fuse_mnt_resolve_path(const char *progname, const char *orig)
+{
+	char buf[PATH_MAX];
+	char *copy;
+	char *dst;
+	char *end;
+	char *lastcomp;
+	const char *toresolv;
+
+	if (!orig[0])
+	{
+		fprintf(stderr, "%s: invalid mountpoint '%s'\n", progname,
+				orig);
+		return NULL;
+	}
+
+	copy = strdup(orig);
+	if (copy == NULL)
+	{
+		fprintf(stderr, "%s: failed to allocate memory\n", progname);
+		return NULL;
+	}
+
+	toresolv = copy;
+	lastcomp = NULL;
+	for (end = copy + strlen(copy) - 1; end > copy && *end == '/'; end--)
+		;
+	if (end[0] != '/')
+	{
+		char *tmp;
+		end[1] = '\0';
+		tmp = strrchr(copy, '/');
+		if (tmp == NULL)
+		{
+			lastcomp = copy;
+			toresolv = ".";
+		}
+		else
+		{
+			lastcomp = tmp + 1;
+			if (tmp == copy)
+				toresolv = "/";
+		}
+		if (strcmp(lastcomp, ".") == 0 || strcmp(lastcomp, "..") == 0)
+		{
+			lastcomp = NULL;
+			toresolv = copy;
+		}
+		else if (tmp)
+			tmp[0] = '\0';
+	}
+	if (realpath(toresolv, buf) == NULL)
+	{
+		fprintf(stderr, "%s: bad mount point %s: %s\n", progname, orig,
+				strerror(errno));
+		free(copy);
+		return NULL;
+	}
+	if (lastcomp == NULL)
+		dst = strdup(buf);
+	else
+	{
+		dst = (char *)malloc(strlen(buf) + 1 + strlen(lastcomp) + 1);
+		if (dst)
+		{
+			unsigned buflen = strlen(buf);
+			if (buflen && buf[buflen - 1] == '/')
+				sprintf(dst, "%s%s", buf, lastcomp);
+			else
+				sprintf(dst, "%s/%s", buf, lastcomp);
+		}
+	}
+	free(copy);
+	if (dst == NULL)
+		fprintf(stderr, "%s: failed to allocate memory\n", progname);
+	return dst;
+}
+
+
+
+
+
 
 
 
 int main(int argc, char *argv[])
 {
-
-
-	std::cout << "ITS ALIVE!!!!!!!!!!!" << std::endl; 
-// static struct fuse_operations fuseops;
-
 
 	int returnStatus;
 	char *testpath;
@@ -916,19 +740,46 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	
+	//Returns absolute path
+	mountpoint.path = realpath(argv[argc - 1], NULL);
+	printf("MOUNTPATH GOT: %s\n", mountpoint.path);
+	//testpath = fuse_mnt_resolve_path(strdup(argv[0]), argv[argc - 1]); returns same thing
+
+	printf("---------This is the realpath should be absolute: %s\n", mountpoint.path);
+	//printf("---------This is the testpath should be: %s\n", testpath);
+
+	mountpoint.dir = (refreshfs_dirp*)malloc(sizeof(struct refreshfs_dirp));
+	if (mountpoint.dir == NULL)
+	{ //Not enough memory
+		return -ENOMEM;
+	}
+	mountpoint.dir->dp = opendir(mountpoint.path);
 
 
+	if ((mountpoint.fd = dirfd(mountpoint.dir->dp)) == -1)
+	{
+		fprintf(stderr, "error: %s\n", strerror(errno));
+		return -1;
+	}
+	mountpoint.dir->offset = 0;
+	mountpoint.dir->entry = NULL;
 
 	// closedir(mountpoint.dir->dp);
 	// free(mountpoint.path);
 
 	returnStatus = fuse_main(argc, argv, &operations, NULL);
 
-
+	closedir(mountpoint.dir->dp);
+	free(mountpoint.path);
 
 	return returnStatus;
-
-
-
 }
+
+
+
+
+
+
+
+
+
