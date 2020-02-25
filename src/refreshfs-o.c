@@ -15,17 +15,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-
-#include <vector>
-#include <opendht.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-
-using std::cout;
-using std::endl;
-
 #define PATH_MAX 4096
 
 struct refreshfs_dirp
@@ -41,14 +30,6 @@ static struct mountpoint
 	struct refreshfs_dirp *dir;
 	char *path;
 } mountpoint;
-
-
-
-
- dht::DhtRunner node;
-
-
-
 
 int order = 0;
 // ... //
@@ -97,33 +78,6 @@ int curr_file_content_idx = -1;
 
 // 	return fixed;
 // }
-
-
-
-
-int convertHexToASCII2(dht::Value Val)
-{
-	cout << "From inside function: " << (char*) Val.data.data() << endl;
-
-	// int len = hex.length();
-	// std::string newString;
-	// for(int i=0; i< len; i+=2)
-	// {
-	// 	string byte = hex.substr(i,2);
-	// 	char chr = (char) (int)strtol(byte.c_str(), null, 16);
-	// 	newString.push_back(chr);
-	// }
-
-
-
-    // std::istringstream iss (Str);
-    // iss.flags(std::ios::hex);
-    // int i;
-    // iss >> i;
-    // std::cout <<"OUTPUT=" << (char)i  << std::endl;
-                return 0;
-}
-
 
 
 
@@ -312,7 +266,7 @@ void write_to_file(const char *path, const char *new_content)
 
 // ... //
 
-static int do_getattr(const char *path, struct stat *st)
+static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *fi)
 {
 
 	printf("Path is: %s: \n", path);
@@ -322,7 +276,7 @@ static int do_getattr(const char *path, struct stat *st)
 	printf("File is %s\n", path);
 	// printf("Mountdir Path name is: ");
 
-	char *tempPath = (char*)path;
+	char *tempPath = path;
 
 	tempPath++;
 
@@ -526,7 +480,7 @@ static int do_mkdir(const char *path, mode_t mode)
 {
 
 
-	char *tempPath = (char*)path;
+	char *tempPath = path;
 	// char* theFixedPath = fixPath(path, strlen(path));
 
 	// printf("theFixedPath: %s\n", theFixedPath);
@@ -631,7 +585,6 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 	return retstat;
 }
 
-
 static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 
@@ -643,40 +596,6 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	int retstat = 0;
 
 	retstat = pwrite(fi->fh, buffer, size, offset);
-
-
-
-	cout << "--------------------------------------------in do_write Path: " << path << " buffer: " << buffer << endl; 
-	node.put(path, buffer);
-
-
-
-	node.get(path, [](const std::vector<std::shared_ptr<dht::Value>>& values) 
-	{
-
-		
-		// Callback called when values are found
-		for (const auto& value : values)
-		{
-			std::stringstream mystream;
-			std::string dataAsString;
-			// std::cout << value.ValueType << endl;
-			mystream << *value;
-			dataAsString = mystream.str();
-
-			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7, dataAsString.length()-2);
-
-			cout << "FINAL: " << dataAsString << endl << endl; 
-			// cout << "The string stread contains: " << mystream.str() << "kkkkkkkkkkkkkkkkkkkkkkk" << endl;
-
-			// std::cout << dht::crypto::PublicKey({'K', '5'}).encrypt({5,10}) << std::endl;
-			// std::cout << "Decrypted: " << decrypt(*value) << std::endl;
-		}
-		return true; // return false to stop the search
-    });
-
-
-
 
 	if(retstat < 0)
 	{
@@ -705,23 +624,17 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	// return retstat;
 }
 
-
-
-static struct hello_fuse_operations:fuse_operations 
-{
-	hello_fuse_operations()
-	{
-	getattr = do_getattr;
-	readdir = do_readdir;
-	opendir = do_opendir;
-	open = do_open;
-	read = do_read;
-	mkdir = do_mkdir;
-	mknod = do_mknod;
-	write = do_write;
-	release = do_release;
-	}
-} operations;
+static struct fuse_operations operations = {
+	.getattr = do_getattr,
+	.readdir = do_readdir,
+	.opendir = do_opendir,
+	.open = do_open,
+	.read = do_read,
+	.mkdir = do_mkdir,
+	.mknod = do_mknod,
+	.write = do_write,
+	.release = do_release,
+};
 
 char *fuse_mnt_resolve_path(const char *progname, const char *orig)
 {
@@ -829,7 +742,7 @@ int main(int argc, char *argv[])
 	printf("---------This is the realpath should be absolute: %s\n", mountpoint.path);
 	//printf("---------This is the testpath should be: %s\n", testpath);
 
-	mountpoint.dir = (refreshfs_dirp*)malloc(sizeof(struct refreshfs_dirp));
+	mountpoint.dir = malloc(sizeof(struct refreshfs_dirp));
 	if (mountpoint.dir == NULL)
 	{ //Not enough memory
 		return -ENOMEM;
@@ -848,88 +761,10 @@ int main(int argc, char *argv[])
 	// closedir(mountpoint.dir->dp);
 	// free(mountpoint.path);
 
-
-
-
-std::cout << "starting DHT stuff" << std::endl; 
-
-
-    // Launch a dht node on a new thread, using a
-    // generated RSA key pair, and listen on port 4222.
-    node.run(4222, dht::crypto::generateIdentity(), true);
-
-    // Join the network through any running node,
-    // here using a known bootstrap node.
-    node.bootstrap("10.0.2.4", "53826");
-
-    // put some data on the dht
-    // std::vector<uint8_t> some_data(5, 10);
-    // // some_data.push_back(5);
-    // node.put("K7", some_data);
-
-    // put some data on the dht, signed with our generated private key
-    // node.putSigned("K6", "V6");
-
-    // // put some data on the dht
-    // std::vector<uint8_t> data(10, 20);
-    // node.put("other_unique_key", data);
-
-    // // put some data on the dht, signed with our generated private key
-    // node.putSigned("other_unique_key_42", data);
-
-    // std::vector<uint_8> MK
-
-    // get data from the dht
-    // node.get("K7", [](const std::vector<std::shared_ptr<dht::Value>>& values) {
-    //     // Callback called when values are found
-    //     for (const auto& value : values)
-    //     {
-    //         std::cout << "Found value: " << *value << std::endl;
-    //         // std::cout << dht::crypto::PublicKey({'K', '5'}).encrypt({5,10}) << std::endl;
-    //         // std::cout << "Decrypted: " << decrypt(*value) << std::endl;
-    //     }
-    //     return true; // return false to stop the search
-    // });
-
-
-    std::cout << "P Data" << std::endl;
-    // sleep(120);
-    // int i = 0;
-    // while(true)
-    // {
-    //     ++i;
-    // }
-
-    std::cout << "-----------------" << std::endl;
-
-
-    // wait for dht threads to end
-
-
-
-
-
-
-
-
 	returnStatus = fuse_main(argc, argv, &operations, NULL);
 
 	closedir(mountpoint.dir->dp);
 	free(mountpoint.path);
 
-
-
-	    node.join();
-
-
 	return returnStatus;
 }
-
-
-
-
-
-
-
-
-
