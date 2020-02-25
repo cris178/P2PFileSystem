@@ -664,7 +664,8 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 			mystream << *value;
 			dataAsString = mystream.str();
 
-			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7, dataAsString.length()-2);
+			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
+			dataAsString.pop_back();
 
 			cout << "FINAL: " << dataAsString << endl << endl; 
 			// cout << "The string stread contains: " << mystream.str() << "kkkkkkkkkkkkkkkkkkkkkkk" << endl;
