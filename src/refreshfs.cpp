@@ -367,6 +367,8 @@ void write_to_file(const char *path, const char *new_content)
 
 // ... //
 
+
+
 static int do_getattr(const char *path, struct stat *st)
 {
 
@@ -377,93 +379,66 @@ static int do_getattr(const char *path, struct stat *st)
 	printf("File is %s\n", path);
 	// printf("Mountdir Path name is: ");
 
-	//char *tempPath = path;
+	char *tempPath = (char*)path;
 
+	tempPath++;
 
-	// if (strcmp(path, "/") != 0)
-	// {
-		//tempPath++;
-	// tempPath = mountpoint.path;
-	// }
+	printf("tempPath: %s\n", tempPath);
 
-	printf("Path passed %s\n", path);
-
-	int returnStatus = 0;
-	if (strcmp(path, "/") != 0)
-	{
-		path++;
-		returnStatus = stat(path, st);
-	}else{
-		returnStatus = stat("MountDIR", st);
-	}
-	//char fpath[PATH_MAX];
+	int returnStatus;
+	// char fpath[PATH_MAX];
 
 	// //form the absolute path to the file in question
 	// printf("mountpoint path: %s\n", mountpoint.path);
 	// printf("fpath: %s\n", fpath);
 	// printf("path: %s\n", path);
 
-	/*
-	strncpy(fpath, mountpoint.path, PATH_MAX);
-	strncat(fpath, path, PATH_MAX);
+	// strncpy(fpath, mountpoint.path, PATH_MAX);
+	// strncat(fpath, path, PATH_MAX);
 
 	printf("getattr after concatenate: \n");
-	printf("mountpoint path: %s\n", mountpoint.path);
-	printf("fpath: %s\n", fpath);
+	// printf("mountpoint path: %s\n", mountpoint.path);
+	// printf("fpath: %s\n", fpath);
 	printf("path: %s\n", path);
 
-	printf("Full absolute path created: %s\n", fpath);
-	*/
+	// printf("Full absolute path created: %s\n", fpath);
+
 	// lstat(fpath, st);
 
-	// if (strcmp(path, "/") == 0)
-	// {
-
-	// 	st->st_mode = S_IFDIR | 0755;
-	// 	st->st_nlink = 2;
-	// 	return 0;
-	// }
-
-	// else
-	// {
-
-	//char tPath[256];
-	/*
 	if (strcmp(path, "/") == 0)
 	{
-		getcwd(tPath,  256);
-		tPath++;
-		printf("CURRENT DIRECT--------------------------------------------------------------------%s\n", tPath);
-		returnStatus = stat(tPath, st);
 
-	}else{
+		st->st_mode = S_IFDIR | 0755;
+		st->st_nlink = 2;
+		return 0;
+	}
+
+	else
+	{
 		returnStatus = stat(tempPath, st);
 	}
-	*/
-		
-	// }
-	
+
 	if (returnStatus < 0)
 	{
 		perror("Something went wrong in do_getattr: \n");
 		returnStatus = -errno;
 	}
 
-	// if (S_ISDIR(st->st_mode))
-	// {
-	// 	// st->st_mode = S_IFDIR | 0755;
-	// 	// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
-	// 	printf("---Inode number %d\n", st->st_ino);
-	// 	printf("---is directory: %d\n", S_ISDIR(st->st_mode));
-	// }
-	// else if (S_ISREG(st->st_mode))
-	// {
-	// 	// st->st_mode = S_IFREG | 0644;
-	// 	// st->st_nlink = 1;
-	// 	// st->st_size = 1024;
+	if (S_ISDIR(st->st_mode))
+	{
+		// st->st_mode = S_IFDIR | 0755;
+		// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+		printf("Inode number %d\n", st->st_ino);
+		printf("is directory: %d\n", S_ISDIR(st->st_mode));
+	}
+	else if (S_ISREG(st->st_mode))
+	{
+		// st->st_mode = S_IFREG | 0644;
+		// st->st_nlink = 1;
+		// st->st_size = 1024;
 
-	// 	printf("---File NOT directory\n");
-	// }
+		printf("File NOT directory\n");
+	}
 	// else
 	// {
 	// 	return -ENOENT;
@@ -494,6 +469,138 @@ static int do_getattr(const char *path, struct stat *st)
 
 	// return 0;
 }
+
+
+
+
+
+// static int do_getattr(const char *path, struct stat *st)
+// {
+
+// 	printf("Path is: %s: \n", path);
+// 	// printf("Path dereferenced is: %s \n", *path);
+// 	order = 0;
+// 	printf("-----------getattr: %i\n", order);
+// 	printf("File is %s\n", path);
+// 	// printf("Mountdir Path name is: ");
+
+// 	//char *tempPath = path;
+
+
+// 	// if (strcmp(path, "/") != 0)
+// 	// {
+// 		//tempPath++;
+// 	// tempPath = mountpoint.path;
+// 	// }
+
+// 	printf("Path passed %s\n", path);
+
+// 	int returnStatus = 0;
+// 	if (strcmp(path, "/") != 0)
+// 	{
+// 		path++;
+// 		returnStatus = stat(path, st);
+// 	}else{
+// 		returnStatus = stat("MountDIR", st);
+// 	}
+// 	//char fpath[PATH_MAX];
+
+// 	// //form the absolute path to the file in question
+// 	// printf("mountpoint path: %s\n", mountpoint.path);
+// 	// printf("fpath: %s\n", fpath);
+// 	// printf("path: %s\n", path);
+
+// 	/*
+// 	strncpy(fpath, mountpoint.path, PATH_MAX);
+// 	strncat(fpath, path, PATH_MAX);
+
+// 	printf("getattr after concatenate: \n");
+// 	printf("mountpoint path: %s\n", mountpoint.path);
+// 	printf("fpath: %s\n", fpath);
+// 	printf("path: %s\n", path);
+
+// 	printf("Full absolute path created: %s\n", fpath);
+// 	*/
+// 	// lstat(fpath, st);
+
+// 	// if (strcmp(path, "/") == 0)
+// 	// {
+
+// 	// 	st->st_mode = S_IFDIR | 0755;
+// 	// 	st->st_nlink = 2;
+// 	// 	return 0;
+// 	// }
+
+// 	// else
+// 	// {
+
+// 	//char tPath[256];
+// 	/*
+// 	if (strcmp(path, "/") == 0)
+// 	{
+// 		getcwd(tPath,  256);
+// 		tPath++;
+// 		printf("CURRENT DIRECT--------------------------------------------------------------------%s\n", tPath);
+// 		returnStatus = stat(tPath, st);
+
+// 	}else{
+// 		returnStatus = stat(tempPath, st);
+// 	}
+// 	*/
+		
+// 	// }
+	
+// 	if (returnStatus < 0)
+// 	{
+// 		perror("Something went wrong in do_getattr: \n");
+// 		returnStatus = -errno;
+// 	}
+
+// 	// if (S_ISDIR(st->st_mode))
+// 	// {
+// 	// 	// st->st_mode = S_IFDIR | 0755;
+// 	// 	// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+// 	// 	printf("---Inode number %d\n", st->st_ino);
+// 	// 	printf("---is directory: %d\n", S_ISDIR(st->st_mode));
+// 	// }
+// 	// else if (S_ISREG(st->st_mode))
+// 	// {
+// 	// 	// st->st_mode = S_IFREG | 0644;
+// 	// 	// st->st_nlink = 1;
+// 	// 	// st->st_size = 1024;
+
+// 	// 	printf("---File NOT directory\n");
+// 	// }
+// 	// else
+// 	// {
+// 	// 	return -ENOENT;
+// 	// }
+
+// 	return returnStatus;
+
+// 	// st->st_uid = getuid();	 // The owner of the file/directory is the user who mounted the filesystem
+// 	// st->st_gid = getgid();	 // The group of the file/directory is the same as the group of the user who mounted the filesystem
+// 	// st->st_atime = time(NULL); // The last "a"ccess of the file/directory is right now
+// 	// st->st_mtime = time(NULL); // The last "m"odification of the file/directory is right now
+
+// 	// if (strcmp(path, "/") == 0 || is_dir(path) == 1)
+// 	// {
+// 	// 	st->st_mode = S_IFDIR | 0755;
+// 	// 	st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+// 	// }
+// 	// else if (is_file(path) == 1)
+// 	// {
+// 	// 	st->st_mode = S_IFREG | 0644;
+// 	// 	st->st_nlink = 1;
+// 	// 	st->st_size = 1024;
+// 	// }
+// 	// else
+// 	// {
+// 	// 	return -ENOENT;
+// 	// }
+
+// 	// return 0;
+// }
 
 static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
