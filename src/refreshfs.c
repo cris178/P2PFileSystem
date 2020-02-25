@@ -16,6 +16,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <iostream>
+
 #define PATH_MAX 4096
 
 struct refreshfs_dirp
@@ -375,7 +377,7 @@ void write_to_file(const char *path, const char *new_content)
 
 // ... //
 
-static int do_getattr(const char *path, struct stat *st, struct fuse_file_info *fi)
+static int do_getattr(const char *path, struct stat *st)
 {
 
 	printf("Path is: %s: \n", path);
@@ -620,7 +622,7 @@ static int do_mkdir(const char *path, mode_t mode)
 {
 
 
-	char *tempPath = path;
+	char *tempPath = (char*)path;
 	// char* theFixedPath = fixPath(path, strlen(path));
 
 	// printf("theFixedPath: %s\n", theFixedPath);
@@ -764,20 +766,40 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	// return retstat;
 }
 
-static struct fuse_operations operations = {
-	.getattr = do_getattr,
-	.readdir = do_readdir,
-	.opendir = do_opendir,
-	.open = do_open,
-	.read = do_read,
-	.mkdir = do_mkdir,
-	.mknod = do_mknod,
-	.write = do_write,
-	.release = do_release,
-	.unlink = do_unlink,
-	.rmdir = do_rmdir,
-	.releasedir = do_releasedir,
-};
+
+
+// struct hello_fuse_operations:fuse_operations
+// {
+//     hello_fuse_operations ()
+//     {
+//         getattr    = hello_getattr;
+//         readdir    = hello_readdir;
+//         open       = hello_open;
+//         read       = hello_read;
+//     }
+// }
+
+
+static struct hello_fuse_operations:fuse_operations 
+{
+	hello_fuse_operations()
+	{
+	getattr = do_getattr;
+	readdir = do_readdir;
+	opendir = do_opendir;
+	open = do_open;
+	read = do_read;
+	mkdir = do_mkdir;
+	mknod = do_mknod;
+	write = do_write;
+	release = do_release;
+	unlink = do_unlink;
+	rmdir = do_rmdir;
+	releasedir = do_releasedir;
+	}
+} operations;
+
+
 
 char *fuse_mnt_resolve_path(const char *progname, const char *orig)
 {
@@ -867,6 +889,11 @@ char *fuse_mnt_resolve_path(const char *progname, const char *orig)
 int main(int argc, char *argv[])
 {
 
+
+	std::cout << "ITS ALIVE!!!!!!!!!!!" << std::endl; 
+// static struct fuse_operations fuseops;
+
+
 	int returnStatus;
 	char *testpath;
 
@@ -885,7 +912,7 @@ int main(int argc, char *argv[])
 	printf("---------This is the realpath should be absolute: %s\n", mountpoint.path);
 	//printf("---------This is the testpath should be: %s\n", testpath);
 
-	mountpoint.dir = malloc(sizeof(struct refreshfs_dirp));
+	// mountpoint.dir = malloc(sizeof(struct refreshfs_dirp));
 	if (mountpoint.dir == NULL)
 	{ //Not enough memory
 		return -ENOMEM;
@@ -910,4 +937,7 @@ int main(int argc, char *argv[])
 	free(mountpoint.path);
 
 	return returnStatus;
+
+
+
 }

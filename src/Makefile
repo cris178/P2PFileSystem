@@ -1,4 +1,4 @@
-COMPILER = gcc
+COMPILER = g++
 FILESYSTEM = refreshfs.c
 
 build: $(FILESYSTEM)
