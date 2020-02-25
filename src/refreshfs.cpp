@@ -667,7 +667,18 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
 			dataAsString.pop_back();
 
-			cout << "FINAL: " << dataAsString << endl << endl; 
+
+			int len = dataAsString.length();
+			std::string newString;
+			for(int i=0; i< len; i+=2)
+			{
+				std::string byte = dataAsString.substr(i,2);
+				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+				newString.push_back(chr);
+}
+
+
+			cout << "FINAL: " << newString << endl << endl; 
 			// cout << "The string stread contains: " << mystream.str() << "kkkkkkkkkkkkkkkkkkkkkkk" << endl;
 
 			// std::cout << dht::crypto::PublicKey({'K', '5'}).encrypt({5,10}) << std::endl;
