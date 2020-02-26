@@ -112,6 +112,11 @@ the path of files and directories. Say you want to write some file, Fuse will se
 to our file system with the full path "/mountdir/filename". If your file is in the root of your file system it will look like "/filename".
 
 
+* The difference between a Root Directory and Mounting Point
+
+The difference between the mounting point and root directory is something that caused me to waste several weeks on a bug. Because I didn't have background information on this topic I was trying to solve a problem that was a deeper issue at hand. You may have not noticed it browsing other file systems but there should always be two parameters to give fuse. A mounting point and a root directory. Why is this? This is something you should explore on your own. But know, if understand this a lot of possible questions could be answered.
+
+
 * Inodes
 Files and their contents are not stored together but are found together with their index position. The relationship will help us find the file and its contents. Inodes are a data structure in unix type file systemsthat describe a file or directory. Inodes store the attributes and disk block locations
 of the objects data. File-system object attributes may include metadata (times of last change, access, modification), as well as owner and permission data. Directories are lists of names assigned to inodes. A directory contains an entry for itself, its parent, and each of its children. As you have seen you can't create a directory or file of the same name because a list is maintaining each file and its unique name.
