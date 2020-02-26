@@ -459,7 +459,7 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 
 	cout << "fpath also caoncatenated and put in node \n" ;
 	cout << "--------------------------------------------in do_write Path: " << path << " buffer: " << buffer << endl; 
-	node.put(fpath, buffer);
+	
 
 
 	if(retstat < 0)
@@ -532,17 +532,18 @@ int main(int argc, char *argv[])
 
 	std::cout << "starting DHT stuff" << std::endl; 
 
-
+	//
     // Launch a dht node on a new thread, using a
     // generated RSA key pair, and listen on port 4222.
+	//This is my node
     node.run(4222, dht::crypto::generateIdentity(), true);
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    node.bootstrap("10.0.2.4", "53826");
+    node.bootstrap("bootstrap.ring.cx", "4222");
 
     std::cout << "P Data" << std::endl;
-   
+   node.put("fpath", "buffer");
 
     std::cout << "-----------------" << std::endl;
 
