@@ -22,6 +22,7 @@
 #include <opendht.h>
 
 
+
 using std::cout;
 using std::endl;
 
@@ -41,10 +42,21 @@ static struct mountpoint
 	char *path;
 } mountpoint;
 
+/*
+class NodeODHT{
+	public:
+		char* pathnameODHT;
+		char* content;
+};
 
 
+std::vector<NodeODHT> synchedNodes;
 
- dht::DhtRunner node;
+
+*/
+
+
+ //dht::DhtRunner node;
 
 
 
@@ -59,7 +71,8 @@ int do_release(const char *path, struct fuse_file_info *fi)
 	strncat(fpath, path, PATH_MAX);
 
 
-	printf("in do_release---------------------------------------------------------------\n");
+	order++;
+	printf("in do_release--------------------------------------------------------------------------------%i\n", order);
 
     return close(fi->fh);
 }
@@ -70,7 +83,7 @@ int do_open(const char *path, struct fuse_file_info *fi)
 {
 
 	order++;
-	printf("----------------------------------------------------------------------------------------------------------------------------do_open: %i\n", order);
+	printf("------------------------------------------------------------------------------do_open: %i\n", order);
 
     int retstat = 0;
     int fd;
@@ -102,7 +115,7 @@ int do_open(const char *path, struct fuse_file_info *fi)
 int do_opendir(const char *path, struct fuse_file_info *fi)
 {
 	order++;
-	printf("-----------do_opendir: %i\n", order);
+	printf("--------------------------------------------------------------------do_opendir: %i\n", order);
 
     DIR *dp;
     int retstat = 0;
@@ -145,7 +158,7 @@ static int do_getattr(const char *path, struct stat *st)
 {
 
 	order = 0;
-	printf("-----------getattr: %i\n", order);
+	printf("------------------------------------------------------getattr: %i\n", order);
 	printf("File is %s\n", path);
 
 	int returnStatus;
@@ -188,7 +201,7 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 {
 	int retstat = 0;
 	order++;
-	printf("-----------do_readdir: %i\n", order);
+	printf("---------------------------------------------------------------do_readdir: %i\n", order);
 	
 		
 	DIR *dp;
@@ -235,7 +248,7 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	order++;
-	printf("--------------------------------------------------------------------------------------------------------doread: %i\n", order);
+	printf("-----------------------------------------------------------------------------doread: %i\n", order);
 	
 	int retstat = 0;
 	
@@ -255,7 +268,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 static int do_mkdir(const char *path, mode_t mode)
 {
 	order++;
-	printf("-----------do mkdir: %i\n", order);
+	printf("--------------------------------------do mkdir: %i\n", order);
 	int returnStatus = -1;
 	char fpath[PATH_MAX];
 	strncpy(fpath, mountpoint.path, PATH_MAX);
@@ -278,7 +291,7 @@ static int do_mkdir(const char *path, mode_t mode)
 static int do_unlink(const char *path)
 {
 	order++;
-	printf("-----------do unlink: %i\n", order);
+	printf("-----------------------------------do unlink: %i\n", order);
 	int returnstatus = 0;
     char fpath[PATH_MAX];
 	strncpy(fpath, mountpoint.path, PATH_MAX);
@@ -301,7 +314,7 @@ static int do_unlink(const char *path)
 static int do_symlink(const char *path, const char *link)
 {
 	order++;
-	printf("-----------dosymlink: %i\n", order);
+	printf("--------------------------------dosymlink: %i\n", order);
 	int returnstatus = 0;
     char flink[PATH_MAX];
 	strncpy(flink, mountpoint.path, PATH_MAX);
@@ -320,7 +333,7 @@ static int do_symlink(const char *path, const char *link)
 static int do_rename(const char *path, const char *newpath)
 {
 	order++;
-	printf("-----------rename: %i\n", order);
+	printf("----------------------------------------rename: %i\n", order);
 
     int returnstatus = 0;
     char fpath[PATH_MAX];
@@ -347,7 +360,7 @@ static int do_rename(const char *path, const char *newpath)
 static int do_rmdir(const char *path)
 {
 	order++;
-	printf("-----------rmdir: %i\n", order);
+	printf("----------------------------------------rmdir: %i\n", order);
     int returnstatus = 0;
     char fpath[PATH_MAX];
 	strncpy(fpath, mountpoint.path, PATH_MAX);
@@ -367,7 +380,7 @@ static int do_rmdir(const char *path)
 static int do_utime(const char *path, struct utimbuf *ubuf)
 {
 	order++;
-	printf("-----------utime: %i\n", order);
+	printf("---------------utime: %i\n", order);
     
     int returnstatus = 0;
     char fpath[PATH_MAX];
@@ -388,7 +401,7 @@ static int do_utime(const char *path, struct utimbuf *ubuf)
 static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 {
 	order++;
-	printf("-----------domaknod: %i\n", order);
+	printf("----------------------------------------------domaknod: %i\n", order);
 
 	int retstat;
     char fpath[PATH_MAX];
@@ -445,7 +458,9 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	order++;
-	printf("------------------------------------------------------------------------------------dowrite: %i\n", order);
+	printf("--------------------------------------------------------------------------------------------dowrite: %i\n", order);
+
+	
 
 	char fpath[PATH_MAX];
 	strncpy(fpath, mountpoint.path, PATH_MAX);
@@ -458,7 +473,7 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	retstat = pwrite(fi->fh, buffer, size, offset);
 
 	cout << "fpath also caoncatenated and put in node \n" ;
-	cout << "--------------------------------------------in do_write Path: " << path << " buffer: " << buffer << endl; 
+	
 	
 
 
@@ -471,26 +486,212 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	return retstat;
 }
 
+/**
+ * Check file access permissions
+ *
+ * This will be called for the access() system call.  If the
+ * 'default_permissions' mount option is given, this method is not
+ * called.
+ *
+ * This method is not called under Linux kernel versions 2.4.x
+ *
+ * Introduced in version 2.5
+ */
+static int do_access(const char *path, int mask)
+{
+	order++;
+	cout << "-----------------in do_access: " << order << endl;
+    int retstat = 0;
+    char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+	printf("Full absolute path created: %s\n", fpath);
+	
+    
+    retstat = access(fpath, mask);
+    
+    if (retstat < 0){
+		perror("Error in access");
+		return -errno;
+	}
+	
+    
+    return retstat;
+}
+
+/** Get file system statistics
+ *
+ * The 'f_frsize', 'f_favail', 'f_fsid' and 'f_flag' fields are ignored
+ *
+ * Replaced 'struct statfs' parameter with 'struct statvfs' in
+ * version 2.5
+ */
+static int do_statfs(const char *path, struct statvfs *statv)
+{
+	order++;
+	cout << "-------------in do_statfs: "   << order << endl;
+    int retstat = 0;
+	char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+	printf("Full absolute path created: %s\n", fpath);
+    
+    
+    // get stats for underlying filesystem
+	retstat = statvfs(fpath, statv);
+	if(retstat < 0){
+		perror("Error in do statfs");
+		return -errno;
+	}
+    
+    return retstat;
+}
+
+
+
+/** Possibly flush cached data
+ *
+ * BIG NOTE: This is not equivalent to fsync().  It's not a
+ * request to sync dirty data.
+ *
+ * Flush is called on each close() of a file descriptor.  So if a
+ * filesystem wants to return write errors in close() and the file
+ * has cached dirty data, this is a good place to write back data
+ * and return any errors.  Since many applications ignore close()
+ * errors this is not always useful.
+ *
+ * NOTE: The flush() method may be called more than once for each
+ * open().  This happens if more than one file descriptor refers
+ * to an opened file due to dup(), dup2() or fork() calls.  It is
+ * not possible to determine if a flush is final, so each flush
+ * should be treated equally.  Multiple write-flush sequences are
+ * relatively rare, so this shouldn't be a problem.
+ *
+ * Filesystems shouldn't assume that flush will always be called
+ * after some writes, or that if will be called at all.
+ *
+ * Changed in version 2.2
+ */
+// this is a no-op in BBFS.  It just logs the call and returns success
+int do_flush(const char *path, struct fuse_file_info *fi)
+{
+	order++;
+	cout << "-------------in flush: "   << order << endl;
+    return 0;
+}
+
+
+
+
+/** Synchronize file contents
+ *
+ * If the datasync parameter is non-zero, then only the user data
+ * should be flushed, not the meta data.
+ *
+ * Changed in version 2.2
+ */
+static int do_fsync(const char *path, int datasync, struct fuse_file_info *fi)
+{
+   order++;
+    cout << "-------------in fsync: "  << order << endl;
+    // some unix-like systems (notably freebsd) don't have a datasync call
+#ifdef HAVE_FDATASYNC
+    if (datasync){
+		int returnstatus = 0;
+		returnstatus= fdatasync(fi->fh)
+		if(returnstatus < 0){
+			perror("Error in first part of fsync");
+			return returnstatus;
+		}
+		return returnstatus;
+	}
+    else
+#endif	
+	int returnstatus =0;
+	returnstatus = fsync(fi->fh);
+	if(returnstatus < 0){
+		perror("Error in second part of fsync");
+		return returnstatus;
+	}
+
+	return returnstatus;
+}
+
+
+/** Synchronize directory contents
+ *
+ * If the datasync parameter is non-zero, then only the user data
+ * should be flushed, not the meta data
+ *
+ * Introduced in version 2.3
+ */
+// when exactly is this called?  when a user calls fsync and it
+// happens to be a directory? ??? >>> I need to implement this...
+static int do_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi)
+{
+    int retstat = 0;
+    order++;
+    cout <<" -------------------------------------------FSYNCDIR"   << order << endl;
+    
+    return retstat;
+}
+
+/** Change the size of a file */
+static int do_truncate(const char *path, off_t newsize)
+{
+	order++;
+	cout << "------------------------------In Truncate " << order << endl;
+    char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+	printf("Full absolute path created: %s\n", fpath);
+	int returnstatus = 0;
+	returnstatus = truncate(fpath, newsize);
+	if(returnstatus < 0){
+		perror("Error in do_truncate");
+		return -errno;
+	}
+
+    return returnstatus;
+}
+
 
 
 static struct hello_fuse_operations:fuse_operations 
 {
 	hello_fuse_operations()
 	{
-	getattr = do_getattr;
+	getattr = do_getattr; //1
+	//.readlink = do_readlink; read a symbolic link
 	readdir = do_readdir;
+	getdir = NULL; //Deprecated
+	mknod = do_mknod; //Creates non directory, non sym link nodes
 	opendir = do_opendir;
 	open = do_open;
 	read = do_read;
-	mkdir = do_mkdir;
-	unlink = do_unlink;
-	symlink = do_symlink;
-    rename = do_rename;
-	utime = do_utime;
-	rmdir = do_rmdir;
-	mknod = do_mknod; //Creates non directory, non sym link nodes
+	mkdir = do_mkdir; //makes a directory node
+	unlink = do_unlink; //removes a file
+	
+	//symlink = do_symlink; //Who cares about symbolic links
+    rename = do_rename; //rename a file or directory
+
+	//link = do_link; Hard link meh who cares
+  	//chmod = do_chmod; Change the permission bits, doesn't matter for our project
+  	//chown = do_chown; change the owner or group of a file
+  	truncate = do_truncate; //change size of file
+
+	utime = do_utime;  //change access/modification time
+	rmdir = do_rmdir; //removes a directory
+	
 	write = do_write;
 	release = do_release;
+	statfs = do_statfs;
+	flush = do_flush;
+	fsync = do_fsync;
+
+	access= do_access;
+
+	fsyncdir = do_fsyncdir;
 	}
 } operations;
 
@@ -536,14 +737,14 @@ int main(int argc, char *argv[])
     // Launch a dht node on a new thread, using a
     // generated RSA key pair, and listen on port 4222.
 	//This is my node
-    node.run(4222, dht::crypto::generateIdentity(), true);
+    //node.run(4222, dht::crypto::generateIdentity(), true);
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    node.bootstrap("bootstrap.ring.cx", "4222");
+    //node.bootstrap("bootstrap.ring.cx", "4222");
 
     std::cout << "P Data" << std::endl;
-   node.put("fpath", "buffer");
+    //node.put("fpath", "buffer");
 
     std::cout << "-----------------" << std::endl;
 
@@ -558,7 +759,7 @@ int main(int argc, char *argv[])
 	closedir(mountpoint.dir->dp);
 	free(mountpoint.path);
 
-	node.join();
+	//node.join();
 
 
 	return returnStatus;
