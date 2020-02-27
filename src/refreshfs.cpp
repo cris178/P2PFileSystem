@@ -572,3 +572,41 @@ int main(int argc, char *argv[])
 
 
 
+	node.get(path, [](const std::vector<std::shared_ptr<dht::Value>>& values) 
+	{
+
+		
+		// Callback called when values are found
+		for (const auto& value : values)
+		{
+			std::stringstream mystream;
+			std::string dataAsString;
+			// std::cout << value.ValueType << endl;
+			mystream << *value;
+			dataAsString = mystream.str();
+
+			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
+			dataAsString.pop_back();
+
+
+			int len = dataAsString.length();
+			std::string newString;
+			for(int i=0; i< len; i+=2)
+			{
+				std::string byte = dataAsString.substr(i,2);
+				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+				newString.push_back(chr);
+			}
+
+
+			cout << "FINAL: " << newString << endl << endl; 
+			// cout << "The string stread contains: " << mystream.str() << "kkkkkkkkkkkkkkkkkkkkkkk" << endl;
+
+			// std::cout << dht::crypto::PublicKey({'K', '5'}).encrypt({5,10}) << std::endl;
+			// std::cout << "Decrypted: " << decrypt(*value) << std::endl;
+		}
+
+
+
+
+
