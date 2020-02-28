@@ -20,7 +20,7 @@
 #include <iostream>
 #include <vector>
 #include <opendht.h>
-
+#include <set>
 
 
 using std::cout;
@@ -121,7 +121,7 @@ int translateDHTEntry(const char* path)
 
 
 
-std::vector<std::string> listOfFiles;
+std::set<std::string> listOfFiles;
 int translateListOfFiles() 
 {
 	// listOfFiles.clear();
@@ -153,7 +153,7 @@ int translateListOfFiles()
 				newString.push_back(chr);
 			}
 			
-			listOfFiles.push_back(newString);
+			listOfFiles.insert(newString);
 		}
 
 		return true; // return false to stop the search
@@ -203,6 +203,15 @@ int do_open(const char *path, struct fuse_file_info *fi)
 	
 	printf("in do_open path: %s", path);
     fd = open(fpath, fi->flags);
+
+
+
+	//try open
+	//check for flag
+	//if not there get from dht and make a file
+	//open again
+
+
     if (fd < 0)
 	{
 		perror("error in do_open");
@@ -268,9 +277,9 @@ static int do_getattr(const char *path, struct stat *st)
 
 	cout << "List of Files =============================================================================================================================\n";
 	if(listOfFiles.size()!= 0){
-		for(int i = 0; i < listOfFiles.size(); ++i)
+		for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)
 		{
-			cout << listOfFiles.at(i) << ", ";
+			cout << *i << ", ";
 		}
 		cout << endl;
 	}
