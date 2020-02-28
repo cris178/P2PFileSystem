@@ -56,12 +56,114 @@ std::vector<NodeODHT> synchedNodes;
 */
 
 
- //dht::DhtRunner node;
+dht::DhtRunner node;
 
 
 
 
 int order = 0;
+
+
+
+
+
+std::string translateDHTEntry_dataRetrieved;
+int translateDHTEntry(const char* path) 
+{
+	node.get(path, 
+	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
+	{
+
+		
+		// Callback called when values are found
+		for (const auto& value : values)
+		{
+			std::stringstream mystream;
+			std::string dataAsString;
+			// std::cout << value.ValueType << endl;
+			mystream << *value;
+			dataAsString = mystream.str();
+
+			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
+			dataAsString.pop_back();
+
+
+			int len = dataAsString.length();
+			std::string newString;
+			for(int i=0; i< len; i+=2)
+			{
+				std::string byte = dataAsString.substr(i,2);
+				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+				newString.push_back(chr);
+			}
+
+
+			cout << "FINAL: " << newString << endl << endl; 
+			
+			translateDHTEntry_dataRetrieved = newString;
+
+
+			cout << translateDHTEntry_dataRetrieved <<endl;
+			// cout << "The string stread contains: " << mystream.str() << "kkkkkkkkkkkkkkkkkkkkkkk" << endl;
+
+			// std::cout << dht::crypto::PublicKey({'K', '5'}).encrypt({5,10}) << std::endl;
+			// std::cout << "Decrypted: " << decrypt(*value) << std::endl;
+		}
+
+		// usleep(100);
+
+		return true; // return false to stop the search
+    });
+
+		return 0;
+}
+
+
+
+
+std::vector<std::string> listOfFiles;
+int translateListOfFiles() 
+{
+	// listOfFiles.clear();
+	
+	node.get((char*)"LIST_OF_FILES", 
+	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
+	{
+
+		
+		// Callback called when values are found
+		for (const auto& value : values)
+		{
+			std::stringstream mystream;
+			std::string dataAsString;
+			// std::cout << value.ValueType << endl;
+			mystream << *value;
+			dataAsString = mystream.str();
+
+			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
+			dataAsString.pop_back();
+
+
+			int len = dataAsString.length();
+			std::string newString;
+			for(int i=0; i< len; i+=2)
+			{
+				std::string byte = dataAsString.substr(i,2);
+				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+				newString.push_back(chr);
+			}
+			
+			listOfFiles.push_back(newString);
+		}
+
+		return true; // return false to stop the search
+    });
+
+		return 0;
+}
+
+
+
 
 //Initially no entries in each of the arrays so index -1
 int do_release(const char *path, struct fuse_file_info *fi)
@@ -73,6 +175,8 @@ int do_release(const char *path, struct fuse_file_info *fi)
 
 	order++;
 	printf("in do_release--------------------------------------------------------------------------------%i\n", order);
+
+
 
     return close(fi->fh);
 }
@@ -156,6 +260,21 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 
 static int do_getattr(const char *path, struct stat *st)
 {
+
+
+	translateListOfFiles();
+
+
+
+	cout << "List of Files =============================================================================================================================\n";
+	if(listOfFiles.size()!= 0){
+		for(int i = 0; i < listOfFiles.size(); ++i)
+		{
+			cout << listOfFiles.at(i) << ", ";
+		}
+		cout << endl;
+	}
+	
 
 	order = 0;
 	printf("------------------------------------------------------getattr: %i\n", order);
@@ -473,8 +592,6 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	retstat = pwrite(fi->fh, buffer, size, offset);
 
 	cout << "fpath also caoncatenated and put in node \n" ;
-	
-	
 
 
 	if(retstat < 0)
@@ -482,6 +599,15 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		perror("error in do_write ");
 		return -errno;
 	}
+
+	
+	node.put("LIST_OF_FILES", path);
+	node.put(path, buffer);
+
+	// translateDHTEntry(path);
+	//cout << "translateDHTEntry: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" << translateDHTEntry_dataRetrieved << endl;
+ 	// for (int i = 0; i < translateDHTEntry_dataRetrieved.size(); ++i)
+	// {
 
 	return retstat;
 }
@@ -737,16 +863,16 @@ int main(int argc, char *argv[])
     // Launch a dht node on a new thread, using a
     // generated RSA key pair, and listen on port 4222.
 	//This is my node
-    //node.run(4222, dht::crypto::generateIdentity(), true);
+    node.run(4222, dht::crypto::generateIdentity(), true);
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    //node.bootstrap("bootstrap.ring.cx", "4222");
+    node.bootstrap("10.0.2.4", "33164");
 
-    std::cout << "P Data" << std::endl;
-    //node.put("fpath", "buffer");
+    // std::cout << "P Data" << std::endl;
+    // node.put("fpath", "buffer");
 
-    std::cout << "-----------------" << std::endl;
+    // std::cout << "-----------------" << std::endl;
 
 
     // wait for dht threads to end
@@ -759,7 +885,7 @@ int main(int argc, char *argv[])
 	closedir(mountpoint.dir->dp);
 	free(mountpoint.path);
 
-	//node.join();
+	node.join();
 
 
 	return returnStatus;
@@ -772,40 +898,6 @@ int main(int argc, char *argv[])
 
 
 
-
-	node.get(path, [](const std::vector<std::shared_ptr<dht::Value>>& values) 
-	{
-
-		
-		// Callback called when values are found
-		for (const auto& value : values)
-		{
-			std::stringstream mystream;
-			std::string dataAsString;
-			// std::cout << value.ValueType << endl;
-			mystream << *value;
-			dataAsString = mystream.str();
-
-			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
-			dataAsString.pop_back();
-
-
-			int len = dataAsString.length();
-			std::string newString;
-			for(int i=0; i< len; i+=2)
-			{
-				std::string byte = dataAsString.substr(i,2);
-				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
-				newString.push_back(chr);
-			}
-
-
-			cout << "FINAL: " << newString << endl << endl; 
-			// cout << "The string stread contains: " << mystream.str() << "kkkkkkkkkkkkkkkkkkkkkkk" << endl;
-
-			// std::cout << dht::crypto::PublicKey({'K', '5'}).encrypt({5,10}) << std::endl;
-			// std::cout << "Decrypted: " << decrypt(*value) << std::endl;
-		}
 
 
 
