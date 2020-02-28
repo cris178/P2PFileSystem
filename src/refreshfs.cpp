@@ -867,7 +867,7 @@ int main(int argc, char *argv[])
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    node.bootstrap("10.0.2.4", "33164");
+    node.bootstrap("bootstrap.jami.net", "4222");
 
     // std::cout << "P Data" << std::endl;
     // node.put("fpath", "buffer");
