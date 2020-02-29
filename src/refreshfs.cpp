@@ -473,6 +473,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 		translateDHTEntry(pathAsString.c_str());
 		char* newPathVar = (char*) dataRetrieved.c_str();
 
+		cout << "pathAsString:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << pathAsString << endl;
+		cout << "newPathVar:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << newPathVar << endl;
+
 		retstat = pread(fi->fh,newPathVar, size, offset);
 
 
