@@ -454,22 +454,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	
 	std::string pathAsString = path; 
 	
-	if(listOfFiles.find(pathAsString) != listOfFiles.end())
+	if(    !(listOfFiles.find(pathAsString) != listOfFiles.end())     )
 	{
-		retstat = pread(fi->fh, buffer, size, offset);
 
-		if(retstat < 0)
-		{
-			perror("error in do_read ");
-			return -errno;
-
-		}
-
-		return retstat;
-	}
-
-	else
-	{
 		translateDHTEntry(pathAsString.c_str());
 		char* newPathVar = (char*) dataRetrieved.c_str();
 
@@ -485,6 +472,25 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 			return -errno;
 		}
 
+
+		return retstat;
+
+
+
+
+	}
+
+	else
+	{
+	
+		retstat = pread(fi->fh, buffer, size, offset);
+
+		if(retstat < 0)
+		{
+			perror("error in do_read ");
+			return -errno;
+
+		}
 
 		return retstat;
 	}
