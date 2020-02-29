@@ -69,8 +69,10 @@ int order = 0;
 
 
 std::string dataRetrieved;
-int translateDHTEntry(const char* path) 
+char* translateDHTEntry(const char* path) 
 {
+
+	char * temp = "";
 	node.get(path, 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
@@ -97,16 +99,23 @@ int translateDHTEntry(const char* path)
 			}
 
 			cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
+			
 			dataRetrieved = newString;
 			cout << dataRetrieved <<endl;
+			temp = (char*)dataRetrieved.c_str();
 		}
 
-		// usleep(1000);
-
+		
+		
 		return true; // return false to stop the search
     });
 
-		return 0;
+
+	// sleep(5);
+
+	while(strlen(temp) == 0){}
+
+	return temp;
 }
 
 
@@ -428,12 +437,14 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	
 	if(    listOfFiles.find(pathAsString) != listOfFiles.end()    )
 	{
-		translateDHTEntry(pathAsString.c_str());
-		sleep(10);
-		char* newPathVar = (char*) dataRetrieved.c_str();
+		char* newPathVar = translateDHTEntry(pathAsString.c_str());
+		// cout << "dumb is: " << dumb << endl;
+		// sleep(3);
+		// char* newPathVar = (char*) dataRetrieved.c_str();
 
 		cout << "pathAsString:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << pathAsString << endl;
 		cout << "newPathVar:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << newPathVar << endl;
+		cout << "length of newPathVar:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << (size_t)strlen(newPathVar) << endl;
 		// sleep(3);
 		// std::ofstream myfile;
 		// cout << "1A" << endl;
@@ -454,7 +465,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	
 		// memcpy(buffer, newPathVar + offset, size);
 		
-		retstat = pread(fi->fh, newPathVar, (size_t)strlen(newPathVar), offset);
+		retstat = pread(fi->fh, (char*)newPathVar, (size_t)strlen(newPathVar), offset);
 
 		if(retstat < 0)
 		{
