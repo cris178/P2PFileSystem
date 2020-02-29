@@ -335,9 +335,15 @@ static int do_getattr(const char *path, struct stat *st)
 			std::ofstream myfile;
 			cout << "1" << endl;
 			std::string newFileName = *i; 
-			newFileName = newFileName.substr(1, newFileName.size() );
-			cout << "newFileName: " << newFileName << endl;
-			myfile.open (newFileName);
+
+			char fpath[PATH_MAX];
+			strncpy(fpath, mountpoint.path, PATH_MAX);
+			strncat(fpath, newFileName.c_str(), PATH_MAX);
+
+			// newFileName = newFileName.substr(1, newFileName.size() );
+			// newFileName
+			cout << "fpath: " << fpath << endl;
+			myfile.open (fpath);
 			cout << "2" << endl;
 			myfile << "GET_FROM_DHT";
 			cout << "3" << endl;
