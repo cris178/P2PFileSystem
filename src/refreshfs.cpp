@@ -68,7 +68,7 @@ int order = 0;
 
 
 
-std::string translateDHTEntry_dataRetrieved;
+std::string dataRetrieved;
 int translateDHTEntry(const char* path) 
 {
 	node.get(path, 
@@ -101,10 +101,10 @@ int translateDHTEntry(const char* path)
 
 			cout << "FINAL: " << newString << endl << endl; 
 			
-			translateDHTEntry_dataRetrieved = newString;
+			dataRetrieved = newString;
 
 
-			cout << translateDHTEntry_dataRetrieved <<endl;
+			cout << dataRetrieved <<endl;
 			// cout << "The string stread contains: " << mystream.str() << "kkkkkkkkkkkkkkkkkkkkkkk" << endl;
 
 			// std::cout << dht::crypto::PublicKey({'K', '5'}).encrypt({5,10}) << std::endl;
@@ -452,13 +452,46 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	
 	int retstat = 0;
 	
-	retstat = pread(fi->fh, buffer, size, offset);
-
-	if(retstat < 0)
+	std::string pathAsString = path; 
+	
+	if(listOfFiles.find(pathAsString) != listOfFiles.end())
 	{
-		perror("error in do_read ");
-		return -errno;
+		retstat = pread(fi->fh, buffer, size, offset);
+
+		if(retstat < 0)
+		{
+			perror("error in do_read ");
+			return -errno;
+
+		}
+
+		return retstat;
 	}
+
+	else
+	{
+		translateDHTEntry(pathAsString.c_str());
+		char* newPathVar = (char*) dataRetrieved.c_str();
+
+		retstat = pread(fi->fh,newPathVar, size, offset);
+
+
+		if(retstat < 0)
+		{
+			perror("error in do_read ");
+			return -errno;
+		}
+
+
+		return retstat;
+	}
+	// retstat = pread(fi->fh, buffer, size, offset);
+
+	// if(retstat < 0)
+	// {
+	// 	perror("error in do_read ");
+	// 	return -errno;
+	// }
 
 	return retstat;
 	
@@ -686,8 +719,8 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	node.put(path, buffer);
 
 	// translateDHTEntry(path);
-	//cout << "translateDHTEntry: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" << translateDHTEntry_dataRetrieved << endl;
- 	// for (int i = 0; i < translateDHTEntry_dataRetrieved.size(); ++i)
+	//cout << "translateDHTEntry: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" << dataRetrieved << endl;
+ 	// for (int i = 0; i < dataRetrieved.size(); ++i)
 	// {
 
 	return retstat;
