@@ -449,13 +449,14 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 {
 	order++;
 	printf("-----------------------------------------------------------------------------doread: %i\n", order);
-	
+	cout << "DO_READ PATH+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << path << endl;
 	int retstat = 0;
 	
 	std::string pathAsString = path; 
 	
 	if(    !(listOfFiles.find(pathAsString) != listOfFiles.end())     )
 	{
+
 
 		translateDHTEntry(pathAsString.c_str());
 		char* newPathVar = (char*) dataRetrieved.c_str();
@@ -483,6 +484,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	else
 	{
 	
+		cout << "DO READ GOING TO ELSE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 		retstat = pread(fi->fh, buffer, size, offset);
 
 		if(retstat < 0)
