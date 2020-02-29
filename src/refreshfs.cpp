@@ -428,54 +428,48 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	
 	if(    listOfFiles.find(pathAsString) != listOfFiles.end()    )
 	{
-
-		
 		translateDHTEntry(pathAsString.c_str());
-		// char* newPathVar = (char*) dataRetrieved.c_str();
+		sleep(10);
+		char* newPathVar = (char*) dataRetrieved.c_str();
 
 		cout << "pathAsString:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << pathAsString << endl;
-		cout << "dataRetrieved:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << dataRetrieved << endl;
-		sleep(3);
-		std::ofstream myfile;
-		cout << "1A" << endl;
-		std::string newFileName = path; 
+		cout << "newPathVar:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << newPathVar << endl;
+		// sleep(3);
+		// std::ofstream myfile;
+		// cout << "1A" << endl;
+		// std::string newFileName = path; 
 
-		char fpath[PATH_MAX];
-		strncpy(fpath, mountpoint.path, PATH_MAX);
-		strncat(fpath, newFileName.c_str(), PATH_MAX);
+		// char fpath[PATH_MAX];
+		// strncpy(fpath, mountpoint.path, PATH_MAX);
+		// strncat(fpath, newFileName.c_str(), PATH_MAX);
 
-		// remove(fpath);
-		cout << "fpathA: " << fpath << endl;
-		myfile.open (fpath);
-		cout << "2A" << endl;
-		myfile << dataRetrieved;
-		cout << "3A" << endl;
-		myfile.close();
-		cout << "4A" << endl;
+		// // remove(fpath);
+		// cout << "fpathA: " << fpath << endl;
+		// myfile.open (fpath);
+		// cout << "2A" << endl;
+		// myfile << dataRetrieved;
+		// cout << "3A" << endl;
+		// myfile.close();
+		// cout << "4A" << endl;
+	
+		// memcpy(buffer, newPathVar + offset, size);
+		
+		retstat = pread(fi->fh, newPathVar, (size_t)strlen(newPathVar), offset);
+
+		if(retstat < 0)
+		{
+			perror("error in do_read ");
+			return -errno;
+		}
+
+		return retstat;
 	}
-	// 	// memcpy(buffer, newPathVar + offset, size);
-	// 	retstat = pread(fi->fh,buffer, size, offset);
 
-
-	// 	if(retstat < 0)
-	// 	{
-	// 		perror("error in do_read ");
-	// 		return -errno;
-	// 	}
-
-
-	// 	return retstat;
-
-
-
-
-	// }
-
-	// else
-	// {
+	else
+	{
 	
 		cout << "DO READ GOING TO ELSE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		retstat = pread(fi->fh, buffer, size, offset);
+		retstat = pread(fi->fh, buffer, 100, offset);
 
 		if(retstat < 0)
 		{
@@ -485,7 +479,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 		}
 
 		return retstat;
-	// }
+	}
 	// retstat = pread(fi->fh, buffer, size, offset);
 
 	// if(retstat < 0)
