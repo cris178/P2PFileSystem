@@ -21,7 +21,8 @@
 #include <vector>
 #include <opendht.h>
 #include <set>
-
+#include <algorithm>
+#include <fstream>
 
 using std::cout;
 using std::endl;
@@ -122,6 +123,7 @@ int translateDHTEntry(const char* path)
 
 
 std::set<std::string> listOfFiles;
+
 int translateListOfFiles() 
 {
 	// listOfFiles.clear();
@@ -267,23 +269,87 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 
 // ... //
 
+
+// Fill in s1 and s2 with values
+std::set<std::string> newFiles;
+
+
+std::set<std::string> PlistOfFiles;
+bool updateInProgress = false;
+
 static int do_getattr(const char *path, struct stat *st)
 {
 
 
 	translateListOfFiles();
 
-
-
-	cout << "List of Files =============================================================================================================================\n";
-	if(listOfFiles.size()!= 0){
+	cout << "List of Files After Update=======================================================================================================================\n";
+	if(listOfFiles.size()!= 0)
+	{
 		for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)
 		{
 			cout << *i << ", ";
 		}
 		cout << endl;
 	}
+
+
+
 	
+
+	cout << "New Files=======================================================================================================================\n";
+
+
+			std::set_difference(listOfFiles.begin(), listOfFiles.end(), PlistOfFiles.begin(), PlistOfFiles.end(),
+			std::inserter(newFiles, newFiles.end()));
+			if(newFiles.size()!= 0)
+		{
+			for(auto i = newFiles.begin(); i != newFiles.end(); ++i)
+			{
+				cout << *i << ", ";
+			}
+			cout << endl;
+		}
+
+	if(newFiles.size()>0 && !updateInProgress)
+	{
+		updateInProgress = true;
+		// std::set_difference(listOfFiles.begin(), listOfFiles.end(), PlistOfFiles.begin(), PlistOfFiles.end(),
+		// 	std::inserter(newFiles, newFiles.end()));
+
+
+		
+		// if(newFiles.size()!= 0)
+		// {
+		// 	for(auto i = newFiles.begin(); i != newFiles.end(); ++i)
+		// 	{
+		// 		cout << *i << ", ";
+		// 	}
+		// 	cout << endl;
+		// }
+
+
+		for(auto i = newFiles.begin(); i != newFiles.end(); ++i)
+		{
+
+			std::ofstream myfile;
+			cout << "1" << endl;
+			std::string newFileName = *i; 
+			newFileName = newFileName.substr(1, newFileName.size() );
+			cout << "newFileName: " << newFileName << endl;
+			myfile.open (newFileName);
+			cout << "2" << endl;
+			myfile << "GET_FROM_DHT";
+			cout << "3" << endl;
+			myfile.close();
+			cout << "4" << endl;
+			
+
+		}
+		updateInProgress = false;
+		PlistOfFiles = listOfFiles;
+	}
+
 
 	order = 0;
 	printf("------------------------------------------------------getattr: %i\n", order);
