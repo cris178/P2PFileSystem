@@ -58,8 +58,9 @@ std::vector<NodeODHT> synchedNodes;
 
 
 dht::DhtRunner node;
-
-
+std::set<std::string> listOfFiles;
+std::set<std::string> listOfContent;
+std::vector<std::string> inumber;
 
 
 int order = 0;
@@ -69,18 +70,55 @@ int order = 0;
 
 
 std::string dataRetrieved;
-char* translateDHTEntry(const char* path) 
+void translateDHTEntry() 
 {
-
-	char * temp = "";
-	node.get(path, 
-	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
+	for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)//Iterate throught list of files
 	{
 
-		
-		// Callback called when values are found
-		for (const auto& value : values)
+		//put in order the content in the listofcontent
+		node.get(*i, 
+		[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 		{
+
+			
+			// Callback called when values are found
+			for (const auto& value : values)
+			{
+				std::stringstream mystream;
+				std::string dataAsString;
+				mystream << *value;
+				dataAsString = mystream.str();
+
+				dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
+				dataAsString.pop_back();
+
+				int len = dataAsString.length();
+				std::string newString;
+				for(int i=0; i< len; i+=2)
+				{
+					std::string byte = dataAsString.substr(i,2);
+					char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+					newString.push_back(chr);
+				}
+
+				//cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
+				dataRetrieved = newString;
+				//cout << "This is the content of the File: \n\n" << dataRetrieved <<endl;
+				listOfContent.insert(dataRetrieved);
+			}
+
+			// usleep(1000);
+
+			return true; // return false to stop the search
+		});
+
+
+
+
+		/*
+		node.get(*i,[&](const std::vector<std::shared_ptr<dht::Value>>& values) {
+        for (const auto& v : values)
+            
 			std::stringstream mystream;
 			std::string dataAsString;
 			mystream << *value;
@@ -90,38 +128,35 @@ char* translateDHTEntry(const char* path)
 			dataAsString.pop_back();
 
 			int len = dataAsString.length();
-			std::string newString;
+			std::string newstring;
 			for(int i=0; i< len; i+=2)
 			{
 				std::string byte = dataAsString.substr(i,2);
 				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
 				newString.push_back(chr);
+				dataRetrieved = newString;
+				listOfContent.insert(dataRetrieved);
 			}
 
-			cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
-			
-			dataRetrieved = newString;
-			cout << dataRetrieved <<endl;
-			temp = (char*)dataRetrieved.c_str();
+        	return true; // keep looking for values
+    	},
+		[](bool success) {
+			std::cout << "Get finished with " << (success ? "success" : "failure") << std::endl;
 		}
-
-		
-		
-		return true; // return false to stop the search
-    });
+		);*/
+	}
 
 
-	// sleep(5);
-
-	while(strlen(temp) == 0){}
-
-	return temp;
+	
+	
+	return;
+	//return 0;
 }
 
 
 
 
-std::set<std::string> listOfFiles;
+
 
 int translateListOfFiles() 
 {
@@ -138,13 +173,17 @@ int translateListOfFiles()
 			std::stringstream mystream;
 			std::string dataAsString;
 			// std::cout << value.ValueType << endl;
+
+
+
 			mystream << *value;
 			dataAsString = mystream.str();
 
 			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
 			dataAsString.pop_back();
 
-
+			//Stop Conversion
+			
 			int len = dataAsString.length();
 			std::string newString;
 			for(int i=0; i< len; i+=2)
@@ -154,7 +193,13 @@ int translateListOfFiles()
 				newString.push_back(chr);
 			}
 			
+
+
+
+			
 			listOfFiles.insert(newString);
+
+			
 		}
 
 		return true; // return false to stop the search
@@ -280,22 +325,48 @@ static int do_getattr(const char *path, struct stat *st)
 {
 
 	translateListOfFiles();
+	translateDHTEntry();
+	//bool contentRetrieved = translateDHTEntry(path); //update list
 
-	cout << "List of Files After Update=======================================================================================================================\n";
+	std::string pathStrigify = path;
+	if(    listOfFiles.find(pathStrigify) != listOfFiles.end()    )
+	{
+		cout << "Current path provided is in our DHT\n";
+	}
+	
+	cout << "\n\n------------ Synchro Table ------------\n\n";
+	cout << "Synching to Files================================\n";
 	if(listOfFiles.size()!= 0)
 	{
+		int count = 0;
 		for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)
 		{
-			cout << *i << ", ";
+			cout << *i << " --index: "<< count << "\n";
+			count ++;
 		}
 		cout << endl;
 	}
+	cout << "Finished Synching ================================\n\n";
 
+	cout << "Synching to Written Content================================\n\n";
+	if(listOfContent.size()!= 0)
+	{
+		int count = 0;
+		for(auto i = listOfContent.begin(); i != listOfContent.end(); ++i)
+		{
+			cout << *i << " --index: "<< count << "\n";
+			count ++;
+		}
+		cout << endl;
+	}
+	cout << "Finished Synching ================================\n\n";
 
 
 	
 
-	cout << "New Files=======================================================================================================================\n";
+	
+
+	cout << "Synching New Files=================================\n\n";
 
 	std::set_difference(listOfFiles.begin(), listOfFiles.end(), PlistOfFiles.begin(), PlistOfFiles.end(),
 						std::inserter(newFiles, newFiles.end()));
@@ -309,30 +380,46 @@ static int do_getattr(const char *path, struct stat *st)
 		cout << endl;
 	}
 
+	cout << "Finished New Files=================================\n\n";
+
 	if(newFiles.size() > 0 && !updateInProgress)
 	{
 		updateInProgress = true;
 
+
+		cout << "...files construction beginning...\n";
+		int counteri = 0;
 		for(auto i = newFiles.begin(); i != newFiles.end(); ++i)
 		{
-
+			
 			std::ofstream myfile;
-			cout << "1" << endl;
+			//cout << "1" << endl;
 			std::string newFileName = *i; 
-
 			char fpath[PATH_MAX];
 			strncpy(fpath, mountpoint.path, PATH_MAX);
 			strncat(fpath, newFileName.c_str(), PATH_MAX);
-
-			cout << "fpath: " << fpath << endl;
+			//cout << "fpath: " << fpath << endl;
 			myfile.open (fpath);
-			cout << "2" << endl;
-			myfile << "GET_FROM_DHT";
-			cout << "3" << endl;
+			//cout << "2" << endl;
+			int counterj = 0;
+			for(auto j = listOfContent.begin(); j != listOfContent.end(); ++j)
+			{
+				//cout << *j << ", ";
+				if(counteri == counterj){
+					std::string content = *j;
+					myfile << content;
+				}
+				counterj++;
+			}
+			//std::string content = *listOfContent.begin();
+			//myfile << content;
+			//myfile << "GET_FROM_DHT";
+			//cout << "3" << endl;
 			myfile.close();
-			cout << "4" << endl;
-			
+			//cout << "4" << endl;
+			counteri++;
 		}
+		cout << "...fileconstruction finished.\n";
 		updateInProgress = false;
 		PlistOfFiles = listOfFiles;
 	}
@@ -426,80 +513,27 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 	return retstat;
 }
 
+/*
+
+*/
+
 static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	order++;
 	printf("-----------------------------------------------------------------------------doread: %i\n", order);
-	cout << "DO_READ PATH+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << path << endl;
 	int retstat = 0;
+
 	
-	std::string pathAsString = path; 
-	
-	if(    listOfFiles.find(pathAsString) != listOfFiles.end()    )
+
+	retstat = pread(fi->fh, buffer, size, offset);
+
+	if(retstat < 0)
 	{
-		char* newPathVar = translateDHTEntry(pathAsString.c_str());
-		// cout << "dumb is: " << dumb << endl;
-		// sleep(3);
-		// char* newPathVar = (char*) dataRetrieved.c_str();
-
-		cout << "pathAsString:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << pathAsString << endl;
-		cout << "newPathVar:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << newPathVar << endl;
-		cout << "length of newPathVar:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << (size_t)strlen(newPathVar) << endl;
-		// sleep(3);
-		// std::ofstream myfile;
-		// cout << "1A" << endl;
-		// std::string newFileName = path; 
-
-		// char fpath[PATH_MAX];
-		// strncpy(fpath, mountpoint.path, PATH_MAX);
-		// strncat(fpath, newFileName.c_str(), PATH_MAX);
-
-		// // remove(fpath);
-		// cout << "fpathA: " << fpath << endl;
-		// myfile.open (fpath);
-		// cout << "2A" << endl;
-		// myfile << dataRetrieved;
-		// cout << "3A" << endl;
-		// myfile.close();
-		// cout << "4A" << endl;
-	
-		// memcpy(buffer, newPathVar + offset, size);
-		
-		retstat = pread(fi->fh, (char*)newPathVar, (size_t)strlen(newPathVar), offset);
-
-		if(retstat < 0)
-		{
-			perror("error in do_read ");
-			return -errno;
-		}
-
-		return retstat;
+		perror("error in do_read ");
+		return -errno;
 	}
 
-	else
-	{
-	
-		cout << "DO READ GOING TO ELSE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		retstat = pread(fi->fh, buffer, 100, offset);
-
-		if(retstat < 0)
-		{
-			perror("error in do_read ");
-			return -errno;
-
-		}
-
-		return retstat;
-	}
-	// retstat = pread(fi->fh, buffer, size, offset);
-
-	// if(retstat < 0)
-	// {
-	// 	perror("error in do_read ");
-	// 	return -errno;
-	// }
-
-	// return retstat;
+	return retstat;
 	
 }
 
