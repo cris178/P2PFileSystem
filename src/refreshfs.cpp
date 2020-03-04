@@ -58,8 +58,10 @@ std::vector<NodeODHT> synchedNodes;
 
 
 dht::DhtRunner node;
-std::set<std::string> listOfFiles;
-std::set<std::string> listOfContent;
+std::vector<std::string> listOfFiles;
+std::vector<std::string> listOfContent;
+//std::set<std::string> listOfFiles;
+//std::set<std::string> listOfContent;
 std::vector<std::string> inumber;
 
 
@@ -104,7 +106,8 @@ void translateDHTEntry()
 				//cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
 				dataRetrieved = newString;
 				//cout << "This is the content of the File: \n\n" << dataRetrieved <<endl;
-				listOfContent.insert(dataRetrieved);
+		
+				listOfContent.push_back(dataRetrieved);
 			}
 
 			// usleep(1000);
@@ -193,12 +196,9 @@ int translateListOfFiles()
 				newString.push_back(chr);
 			}
 			
-
-
-
-			
-			listOfFiles.insert(newString);
-
+			if(std::find(listOfFiles.begin(), listOfFiles.end(), dataRetrieved) == listOfFiles.end()){
+					listOfFiles.push_back(newString);
+			}
 			
 		}
 
@@ -329,7 +329,7 @@ static int do_getattr(const char *path, struct stat *st)
 	//bool contentRetrieved = translateDHTEntry(path); //update list
 
 	std::string pathStrigify = path;
-	if(    listOfFiles.find(pathStrigify) != listOfFiles.end()    )
+	if(    std::find(listOfFiles.begin(), listOfFiles.end()) != listOfFiles.end()    )
 	{
 		cout << "Current path provided is in our DHT\n";
 	}
@@ -755,6 +755,7 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		return -errno;
 	}
 
+	//Take care of swp files
 	std::string found = path;
 	cout << "Checking to remove swap files. Current File Name is: " << found << endl;
 	std::size_t look = found.find(".swp");
