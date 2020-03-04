@@ -24,6 +24,10 @@
 #include <algorithm>
 #include <fstream>
 
+
+#include <thread>         // std::thread
+#include <mutex>          // std::mutex
+
 using std::cout;
 using std::endl;
 
@@ -433,13 +437,14 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	printf("-----------------------------------------------------------------------------doread: %i\n", order);
 	cout << "DO_READ PATH+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << path << endl;
 	int retstat = 0;
-	
+
+
+	std::mutex mtx;           // mutex for critical section
 	std::string pathAsString = path; 
-	
+	std::string theData;
 	if(    listOfFiles.find(pathAsString) != listOfFiles.end()    )
 	{
-
-		std::string theData;
+		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
 		node.get(path, [&](const std::vector<std::shared_ptr<dht::Value>>& values)  
@@ -466,46 +471,44 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					}
 
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
-					// theData = newString;
-					
-					std::ofstream mystream2; 
-					mystream2.open(path);
-					mystream2 << newString;
-					mystream2.close();
+					theData = newString;
 
 					cout << "WROTE IT++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				}
 
 				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+
 				return true;
 			});
 
-		cout << "DO READ GOING TO READ PART FIRST++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		//sleep(20);
-		// sleep(10);
-		retstat = pread(fi->fh, (char*)theData.c_str(), theData.size(), offset);
+			while(theData.size()==0){cout << "..."; usleep(1000);}
+			int retstat = pread(fi->fh, (char*)theData.c_str(), theData.size(), offset);
 
-		if(retstat < 0)
-		{
-			perror("error in do_read ");
-			return -errno;
+			if(retstat < 0)
+			{
+				perror("error in do_read ");
+				mtx.unlock();
+				return -errno;
 
-		}
-
-		return retstat;
-
+			}
+			mtx.unlock();
+		// retstat = pread(fi->fh, buffer,size, offset);		
 	}
 	else
 	{
+		mtx.lock();
+
 		cout << "DO READ GOING TO READ PART SECOND++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		retstat = pread(fi->fh, buffer,size, offset);
+		retstat = pread(fi->fh, (char*)theData.c_str(),size, offset);
 
 		if(retstat < 0)
 		{
 			perror("error in do_read ");
+			mtx.unlock();
 			return -errno;
 
 		}
+		mtx.unlock();
 
 		return retstat;
 	}
@@ -996,7 +999,7 @@ int main(int argc, char *argv[])
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    node.bootstrap("bootstrap.jami.net", "4222");
+    node.bootstrap("10.0.2.4", "4224");
 
     // std::cout << "P Data" << std::endl;
     // node.put("fpath", "buffer");
