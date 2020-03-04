@@ -431,6 +431,8 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 	return retstat;
 }
 
+
+// bool updatingFile = false;
 static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	order++;
@@ -441,13 +443,16 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 	std::mutex mtx;           // mutex for critical section
 	std::string pathAsString = path; 
-	std::string theData;
-	if(    listOfFiles.find(pathAsString) != listOfFiles.end()    )
+	// std::string theData;
+	if(    listOfFiles.find(pathAsString) != listOfFiles.end()   )
 	{
+
+		// updatingFile = true;
+
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
-		node.get(path, [&](const std::vector<std::shared_ptr<dht::Value>>& values)  
+		node.get(path, [&buffer, &mtx](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
@@ -471,47 +476,87 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					}
 
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
-					theData = newString;
+					
+					// mtx.lock();
+					// theData = newString;
+					// int retstat = pread(fi->fh, (char*)theData.c_str(),theData.size(), offset);
+					// if(retstat < 0)
+					// {
+					// 	perror("error in do_read ");
+					// 	// return -errno;
+					// }
 
+					// mtx.unlock();
+					// sleep(1);
+					// std::ofstream mystrm;
+					// mystrm.open(path);
+					// mystrm << theData;
+					// mystrm.close();
+					buffer = (char*)newString.c_str();
 					cout << "WROTE IT++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+
+
+					// do_read(path, buffer, size, offset, fi);
+					// updatingFile = false;
+
+
+					break;
 				}
 
 				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
+					
+
+				// int retstat = pread(fi->fh, (char*)theData.c_str(), theData.size(), offset);
+				
+				mtx.unlock();
 				return true;
 			});
 
-			while(theData.size()==0){cout << "..."; usleep(1000);}
-			int retstat = pread(fi->fh, (char*)theData.c_str(), theData.size(), offset);
-
-			if(retstat < 0)
-			{
-				perror("error in do_read ");
-				mtx.unlock();
-				return -errno;
-
-			}
+			mtx.lock();
+			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 			mtx.unlock();
-		// retstat = pread(fi->fh, buffer,size, offset);		
+
+			// while(theData.size()==0){cout << "..."; usleep(1000);}
+			
+
+			// if(retstat < 0)
+			// {
+			// 	perror("error in do_read ");
+			// 	mtx.unlock();
+			// 	return -errno;
+
+			// }
+			// mtx.unlock();
+		// retstat = pread(fi->fh, buffer,size, offset);
+
+		// mtx.lock();
+		// retstat = pread(fi->fh, (char*)theData.c_str(),size, offset);	
+		// mtx.unlock();	
 	}
-	else
-	{
-		mtx.lock();
 
-		cout << "DO READ GOING TO READ PART SECOND++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		retstat = pread(fi->fh, (char*)theData.c_str(),size, offset);
+	mtx.lock();
+	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+	mtx.unlock();
+	return 0;
+	// else
+	// {
+	// 	// mtx.lock();
 
-		if(retstat < 0)
-		{
-			perror("error in do_read ");
-			mtx.unlock();
-			return -errno;
+	// 	cout << "DO READ GOING TO READ PART SECOND++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+	// 	retstat = pread(fi->fh, buffer,size, offset);
 
-		}
-		mtx.unlock();
+	// 	if(retstat < 0)
+	// 	{
+	// 		perror("error in do_read ");
+	// 		// mtx.unlock();
+	// 		return -errno;
 
-		return retstat;
-	}
+	// 	}
+	// 	// mtx.unlock();
+
+	// 	// return retstat;
+	// }
 	
 }
 
