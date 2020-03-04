@@ -279,7 +279,7 @@ bool updateInProgress = false;
 
 static int do_getattr(const char *path, struct stat *st)
 {
-
+	newFiles.clear();
 	translateListOfFiles();
 
 	cout << "List of Files After Update=======================================================================================================================\n";
@@ -436,39 +436,15 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	
 	std::string pathAsString = path; 
 	
-	// if(    listOfFiles.find(pathAsString) != listOfFiles.end()    )
-	// {
-	// 	// translateDHTEntry(pathAsString.c_str());
-		// sleep(60);
-		// char* newPathVar = (char*) dataRetrieved.c_str();
+	if(    listOfFiles.find(pathAsString) != listOfFiles.end()    )
+	{
 
-		// cout << "pathAsString:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << pathAsString << endl;
-		// cout << "newPathVar:++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << newPathVar << endl;
-		// cout << "dataRetrieved:+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << dataRetrieved << endl;
-		// sleep(3);
-		// std::ofstream myfile;
-		// cout << "1A" << endl;
-		// std::string newFileName = path; 
-
-		// char fpath[PATH_MAX];
-		// strncpy(fpath, mountpoint.path, PATH_MAX);
-		// strncat(fpath, newFileName.c_str(), PATH_MAX);
-
-		// // remove(fpath);
-		// cout << "fpathA: " << fpath << endl;
-		// myfile.open (fpath);
-		// cout << "2A" << endl;
-		// myfile << dataRetrieved;
-		// cout << "3A" << endl;
-		// myfile.close();
-		// cout << "4A" << endl;
-	
-		// memcpy(buffer, newPathVar + offset, size);
+		std::string theData;
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
-		node.get(path, 
-			[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
+		node.get(path, [&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
+				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
 				for (const auto& value : values)
 				{
@@ -489,43 +465,39 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 						newString.push_back(chr);
 					}
 
-					
-
-
-
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
+					// theData = newString;
 					
 					std::ofstream mystream2; 
 					mystream2.open(path);
 					mystream2 << newString;
 					mystream2.close();
-					// return true;
-					break;
 
-					// retstat = pread(fi->fh, (char*)newString.c_str(), (size_t)strlen((char*)newString.c_str()), offset);
-
-
-					// if(retstat < 0)
-					// {
-					// 	perror("error in do_read ");
-					// 	// return -errno;
-					// }
-					// break;
-					//break;
-					// return false;
-					// sleep(30);
-					// dataRetrieved = newString;
-					// cout << dataRetrieved <<endl;
+					cout << "WROTE IT++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				}
-			
+
+				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				return true;
 			});
-		// return retstat;
-	// }
-	// else
-	// {
-	
-		cout << "DO READ GOING TO ELSE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+
+		cout << "DO READ GOING TO READ PART FIRST++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+		//sleep(20);
+		// sleep(10);
+		retstat = pread(fi->fh, (char*)theData.c_str(), theData.size(), offset);
+
+		if(retstat < 0)
+		{
+			perror("error in do_read ");
+			return -errno;
+
+		}
+
+		return retstat;
+
+	}
+	else
+	{
+		cout << "DO READ GOING TO READ PART SECOND++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 		retstat = pread(fi->fh, buffer,size, offset);
 
 		if(retstat < 0)
@@ -536,16 +508,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 		}
 
 		return retstat;
-	// }
-	// retstat = pread(fi->fh, buffer, size, offset);
-
-	// if(retstat < 0)
-	// {
-	// 	perror("error in do_read ");
-	// 	return -errno;
-	// }
-
-	// return retstat;
+	}
 	
 }
 
