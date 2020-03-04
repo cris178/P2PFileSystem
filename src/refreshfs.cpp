@@ -452,7 +452,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
-		node.get(path, [&buffer, &mtx](const std::vector<std::shared_ptr<dht::Value>>& values)  
+		node.get(path, [&buffer, &mtx, &path, &size](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
@@ -488,11 +488,12 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 					// mtx.unlock();
 					// sleep(1);
-					// std::ofstream mystrm;
-					// mystrm.open(path);
-					// mystrm << theData;
-					// mystrm.close();
+					std::ofstream mystrm;
+					mystrm.open(path);
+					mystrm << newString << endl;
+					mystrm.close();
 					buffer = (char*)newString.c_str();
+					size = strlen(buffer);
 					cout << "WROTE IT++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
 
@@ -507,7 +508,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 					
 
-				// int retstat = pread(fi->fh, (char*)theData.c_str(), theData.size(), offset);
+				
 				
 				mtx.unlock();
 				return true;
@@ -515,6 +516,15 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+			int retstat = pread(fi->fh, buffer, size, offset);
+			if(retstat < 0)
+			{
+				perror("error in do_read ");
+				mtx.unlock();
+				return -errno;
+
+			}
+
 			mtx.unlock();
 
 			// while(theData.size()==0){cout << "..."; usleep(1000);}
@@ -534,11 +544,22 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 		// retstat = pread(fi->fh, (char*)theData.c_str(),size, offset);	
 		// mtx.unlock();	
 	}
+		cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+	return strlen(buffer);
 
-	mtx.lock();
-	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-	mtx.unlock();
-	return 0;
+	// mtx.lock();
+	// retstat = pread(fi->fh, buffer, strlen(buffer), offset);
+	// if(retstat < 0)
+	// {
+	// 	perror("error in do_read ");
+	// 	mtx.unlock();
+	// 	return -errno;
+
+	// }
+
+
+	// mtx.unlock();
+	// return retstat;
 	// else
 	// {
 	// 	// mtx.lock();
