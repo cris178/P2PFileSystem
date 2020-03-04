@@ -70,6 +70,17 @@ int order = 0;
 
 
 
+bool checkInListOfContents(std::string content){
+	for(int i = 0; i < listOfContent.size();i++){
+		for(int j = 0; j < listOfContent.size(); j++){
+			if(listOfContent.at(i) == listOfContent.at(j)){
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 
 std::string dataRetrieved;
 void translateDHTEntry() 
@@ -106,8 +117,12 @@ void translateDHTEntry()
 				//cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
 				dataRetrieved = newString;
 				//cout << "This is the content of the File: \n\n" << dataRetrieved <<endl;
-		
-				listOfContent.push_back(dataRetrieved);
+				if(checkInListOfContents(dataRetrieved) == 0){
+					listOfContent.push_back(dataRetrieved);
+				}
+
+
+				//listOfContent.push_back(dataRetrieved);
 			}
 
 			// usleep(1000);
@@ -158,14 +173,21 @@ void translateDHTEntry()
 
 
 
-
+bool checkInListOfFile(std::string path){
+	for(int i = 0; i < listOfFiles.size();i++){
+		if(listOfFiles.at(i) == path){
+			return 1;
+		}
+	}
+	return 0;
+}
 
 
 int translateListOfFiles() 
 {
 	// listOfFiles.clear();
 	
-	node.get((char*)"LIST_OF_PATHS", 
+	node.get((char*)"LIST_OF_FILENAMES", 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
 
@@ -196,8 +218,10 @@ int translateListOfFiles()
 				newString.push_back(chr);
 			}
 			
-			if(std::find(listOfFiles.begin(), listOfFiles.end(), dataRetrieved) == listOfFiles.end()){
-					listOfFiles.push_back(newString);
+
+			
+			if(checkInListOfFile(newString) == 0){
+				listOfFiles.push_back(newString);
 			}
 			
 		}
@@ -318,18 +342,20 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 std::set<std::string> newFiles;
 
 
-std::set<std::string> PlistOfFiles;
+std::vector<std::string> PlistOfFiles;
 bool updateInProgress = false;
 
 static int do_getattr(const char *path, struct stat *st)
 {
-
+	
 	translateListOfFiles();
+	
 	translateDHTEntry();
+	
 	//bool contentRetrieved = translateDHTEntry(path); //update list
 
 	std::string pathStrigify = path;
-	if(    std::find(listOfFiles.begin(), listOfFiles.end()) != listOfFiles.end()    )
+	if(    std::find(listOfFiles.begin(), listOfFiles.end(), pathStrigify) != listOfFiles.end()    )
 	{
 		cout << "Current path provided is in our DHT\n";
 	}
@@ -761,7 +787,7 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	std::size_t look = found.find(".swp");
 	if(look == std::string::npos){
 		cout << "... UPLOADING TO OPENDHT\n";
-		node.put("LIST_OF_PATHS", path);
+		node.put("LIST_OF_FILENAMES", path);
 		node.put(path, buffer);
 	}
 	
