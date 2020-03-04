@@ -162,7 +162,7 @@ int translateListOfFiles()
 {
 	// listOfFiles.clear();
 	
-	node.get((char*)"LIST_OF_FILES", 
+	node.get((char*)"LIST_OF_PATHS", 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
 
@@ -346,7 +346,7 @@ static int do_getattr(const char *path, struct stat *st)
 		}
 		cout << endl;
 	}
-	cout << "Finished Synching ================================\n\n";
+	cout << "End Finished Synching ================================\n\n";
 
 	cout << "Synching to Written Content================================\n\n";
 	if(listOfContent.size()!= 0)
@@ -354,12 +354,13 @@ static int do_getattr(const char *path, struct stat *st)
 		int count = 0;
 		for(auto i = listOfContent.begin(); i != listOfContent.end(); ++i)
 		{
-			cout << *i << " --index: "<< count << "\n";
+			cout << "--index of written content below : "<< count << endl;
+			cout << *i << "\n";
 			count ++;
 		}
 		cout << endl;
 	}
-	cout << "Finished Synching ================================\n\n";
+	cout << "End Finished Synching Written Content========================\n\n";
 
 
 	
@@ -754,9 +755,15 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		return -errno;
 	}
 
+	std::string found = path;
+	cout << "Checking to remove swap files. Current File Name is: " << found << endl;
+	std::size_t look = found.find(".swp");
+	if(look == std::string::npos){
+		cout << "... UPLOADING TO OPENDHT\n";
+		node.put("LIST_OF_PATHS", path);
+		node.put(path, buffer);
+	}
 	
-	node.put("LIST_OF_FILES", path);
-	node.put(path, buffer);
 
 	// translateDHTEntry(path);
 	//cout << "translateDHTEntry: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" << dataRetrieved << endl;
