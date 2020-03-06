@@ -440,19 +440,16 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	cout << "DO_READ PATH+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << path << endl;
 	int retstat = 0;
 
-
 	std::mutex mtx;           // mutex for critical section
 	std::string pathAsString = path; 
-	// std::string theData;
+
 	if(    listOfFiles.find(pathAsString) != listOfFiles.end()   )
 	{
-
-		// updatingFile = true;
 
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
-		node.get(path, [&buffer, &mtx, &path, &size](const std::vector<std::shared_ptr<dht::Value>>& values)  
+		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
@@ -476,47 +473,39 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					}
 
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
-					
-					// mtx.lock();
-					// theData = newString;
-					// int retstat = pread(fi->fh, (char*)theData.c_str(),theData.size(), offset);
-					// if(retstat < 0)
-					// {
-					// 	perror("error in do_read ");
-					// 	// return -errno;
-					// }
 
-					// mtx.unlock();
-					// sleep(1);
-					std::ofstream mystrm;
-					mystrm.open(path);
-					mystrm << newString << endl;
-					mystrm.close();
+
 					buffer = (char*)newString.c_str();
 					size = strlen(buffer);
+
+					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER:" << buffer << "SIZE:" << size << endl;
+
+					int retstat2 = pwrite(fi->fh, buffer, size, offset);
+					
+
+
+					if(retstat2 < 0)
+					{
+						perror("error in do_read PWRITE ");
+					}
+
+
 					cout << "WROTE IT++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-
-
-					// do_read(path, buffer, size, offset, fi);
-					// updatingFile = false;
-
 
 					break;
 				}
 
 				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
-					
-
-				
-				
 				mtx.unlock();
 				return true;
 			});
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+			
 			int retstat = pread(fi->fh, buffer, size, offset);
+			
 			if(retstat < 0)
 			{
 				perror("error in do_read ");
@@ -525,59 +514,10 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 			}
 
-			mtx.unlock();
-
-			// while(theData.size()==0){cout << "..."; usleep(1000);}
-			
-
-			// if(retstat < 0)
-			// {
-			// 	perror("error in do_read ");
-			// 	mtx.unlock();
-			// 	return -errno;
-
-			// }
-			// mtx.unlock();
-		// retstat = pread(fi->fh, buffer,size, offset);
-
-		// mtx.lock();
-		// retstat = pread(fi->fh, (char*)theData.c_str(),size, offset);	
-		// mtx.unlock();	
+			mtx.unlock();	
 	}
 		cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 	return strlen(buffer);
-
-	// mtx.lock();
-	// retstat = pread(fi->fh, buffer, strlen(buffer), offset);
-	// if(retstat < 0)
-	// {
-	// 	perror("error in do_read ");
-	// 	mtx.unlock();
-	// 	return -errno;
-
-	// }
-
-
-	// mtx.unlock();
-	// return retstat;
-	// else
-	// {
-	// 	// mtx.lock();
-
-	// 	cout << "DO READ GOING TO READ PART SECOND++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-	// 	retstat = pread(fi->fh, buffer,size, offset);
-
-	// 	if(retstat < 0)
-	// 	{
-	// 		perror("error in do_read ");
-	// 		// mtx.unlock();
-	// 		return -errno;
-
-	// 	}
-	// 	// mtx.unlock();
-
-	// 	// return retstat;
-	// }
 	
 }
 
@@ -798,14 +738,8 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		return -errno;
 	}
 
-	
 	node.put("LIST_OF_FILES", path);
 	node.put(path, buffer);
-
-	// translateDHTEntry(path);
-	//cout << "translateDHTEntry: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" << dataRetrieved << endl;
- 	// for (int i = 0; i < dataRetrieved.size(); ++i)
-	// {
 
 	return retstat;
 }
