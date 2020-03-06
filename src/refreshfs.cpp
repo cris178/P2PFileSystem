@@ -1,4 +1,3 @@
-
 #define FUSE_USE_VERSION 30
 
 #include <fuse.h>
@@ -24,6 +23,13 @@
 #include <algorithm>
 #include <fstream>
 
+#include <map>
+
+#include<thread>
+#include<mutex>
+
+std::mutex mtx;
+
 using std::cout;
 using std::endl;
 
@@ -43,48 +49,30 @@ static struct mountpoint
 	char *path;
 } mountpoint;
 
-/*
-class NodeODHT{
-	public:
-		char* pathnameODHT;
-		char* content;
-};
 
-
-std::vector<NodeODHT> synchedNodes;
-
-
-*/
 
 
 dht::DhtRunner node;
-std::vector<std::string> listOfFiles;
-std::vector<std::string> listOfContent;
-//std::set<std::string> listOfFiles;
-//std::set<std::string> listOfContent;
-std::vector<std::string> inumber;
-
+std::set<std::string> listOfFiles;
+std::set<std::string> listOfContent;
+std::set<std::string> localFiles;
+std::map<std::string,std::string> contentMap;
+bool wait = 0;
 
 int order = 0;
 
 
-
-
-bool checkInListOfContents(std::string content){
-	for(int i = 0; i < listOfContent.size();i++){
-		for(int j = 0; j < listOfContent.size(); j++){
-			if(listOfContent.at(i) == listOfContent.at(j)){
-				return 1;
-			}
-		}
-	}
-	return 0;
+bool inLocalFiles(std::string path){
+	bool isIn = localFiles.find(path) != localFiles.end();
+	return isIn;
 }
+
 
 
 std::string dataRetrieved;
 void translateDHTEntry() 
 {
+	mtx.lock();
 	for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)//Iterate throught list of files
 	{
 
@@ -117,77 +105,41 @@ void translateDHTEntry()
 				//cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
 				dataRetrieved = newString;
 				//cout << "This is the content of the File: \n\n" << dataRetrieved <<endl;
-				if(checkInListOfContents(dataRetrieved) == 0){
-					listOfContent.push_back(dataRetrieved);
+				//listOfContent.insert(dataRetrieved);
+				//std::pair<std::map<std::string,std::string>::iterator,bool>ret;
+				contentMap.insert(std::pair<std::string,std::string>(*i,dataRetrieved));
+				/*
+				if(ret.second == false){
+					cout << "For path: " << *i << " content already exists with value " << ret.first->second << endl;
 				}
-
-
-				//listOfContent.push_back(dataRetrieved);
+				*/
 			}
 
 			// usleep(1000);
 
 			return true; // return false to stop the search
-		});
-
-
-
-
-		/*
-		node.get(*i,[&](const std::vector<std::shared_ptr<dht::Value>>& values) {
-        for (const auto& v : values)
-            
-			std::stringstream mystream;
-			std::string dataAsString;
-			mystream << *value;
-			dataAsString = mystream.str();
-
-			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
-			dataAsString.pop_back();
-
-			int len = dataAsString.length();
-			std::string newstring;
-			for(int i=0; i< len; i+=2)
-			{
-				std::string byte = dataAsString.substr(i,2);
-				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
-				newString.push_back(chr);
-				dataRetrieved = newString;
-				listOfContent.insert(dataRetrieved);
-			}
-
-        	return true; // keep looking for values
-    	},
+		},
 		[](bool success) {
-			std::cout << "Get finished with " << (success ? "success" : "failure") << std::endl;
-		}
-		);*/
+			std::cout << "\n\n\n\nRetrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
 	}
 
-
-	
-	
+	mtx.unlock();
 	return;
 	//return 0;
 }
 
 
 
-bool checkInListOfFile(std::string path){
-	for(int i = 0; i < listOfFiles.size();i++){
-		if(listOfFiles.at(i) == path){
-			return 1;
-		}
-	}
-	return 0;
-}
+
 
 
 int translateListOfFiles() 
 {
 	// listOfFiles.clear();
-	
-	node.get((char*)"LIST_OF_FILENAMES", 
+	mtx.lock();
+	node.get((char*)"LIST_OF_FILES", 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
 
@@ -216,20 +168,20 @@ int translateListOfFiles()
 				std::string byte = dataAsString.substr(i,2);
 				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
 				newString.push_back(chr);
-			}
-			
-
-			
-			if(checkInListOfFile(newString) == 0){
-				listOfFiles.push_back(newString);
-			}
-			
+			}			
+			listOfFiles.insert(newString);
 		}
 
 		return true; // return false to stop the search
-    });
+    },
+		[](bool success) {
+			std::cout << "\n\nRetrive, Translate, Scan Filenames in ODHT..." << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
 
-		return 0;
+	mtx.unlock();
+	
+	return 0;
 }
 
 
@@ -342,73 +294,22 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 std::set<std::string> newFiles;
 
 
-std::vector<std::string> PlistOfFiles;
+std::set<std::string> PlistOfFiles;
 bool updateInProgress = false;
 
 static int do_getattr(const char *path, struct stat *st)
 {
-	
-	translateListOfFiles();
-	
-	translateDHTEntry();
-	
-	//bool contentRetrieved = translateDHTEntry(path); //update list
 
 	std::string pathStrigify = path;
-	if(    std::find(listOfFiles.begin(), listOfFiles.end(), pathStrigify) != listOfFiles.end()    )
+	if(listOfFiles.find(pathStrigify) != listOfFiles.end()    )
 	{
 		cout << "Current path provided is in our DHT\n";
 	}
 	
-	cout << "\n\n------------ Synchro Table ------------\n\n";
-	cout << "Synching to Files================================\n";
-	if(listOfFiles.size()!= 0)
-	{
-		int count = 0;
-		for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)
-		{
-			cout << *i << " --index: "<< count << "\n";
-			count ++;
-		}
-		cout << endl;
-	}
-	cout << "End Finished Synching ================================\n\n";
-
-	cout << "Synching to Written Content================================\n\n";
-	if(listOfContent.size()!= 0)
-	{
-		int count = 0;
-		for(auto i = listOfContent.begin(); i != listOfContent.end(); ++i)
-		{
-			cout << "--index of written content below : "<< count << endl;
-			cout << *i << "\n";
-			count ++;
-		}
-		cout << endl;
-	}
-	cout << "End Finished Synching Written Content========================\n\n";
+	//bool contentRetrieved = translateDHTEntry(path); //update list
 
 
-	
-
-	
-
-	cout << "Synching New Files=================================\n\n";
-
-	std::set_difference(listOfFiles.begin(), listOfFiles.end(), PlistOfFiles.begin(), PlistOfFiles.end(),
-						std::inserter(newFiles, newFiles.end()));
-
-	if(newFiles.size()!= 0)
-	{
-		for(auto i = newFiles.begin(); i != newFiles.end(); ++i)
-		{
-			cout << *i << ", ";
-		}
-		cout << endl;
-	}
-
-	cout << "Finished New Files=================================\n\n";
-
+	/*
 	if(newFiles.size() > 0 && !updateInProgress)
 	{
 		updateInProgress = true;
@@ -450,7 +351,7 @@ static int do_getattr(const char *path, struct stat *st)
 		updateInProgress = false;
 		PlistOfFiles = listOfFiles;
 	}
-
+	*/
 
 	order = 0;
 	printf("------------------------------------------------------getattr: %i\n", order);
@@ -488,12 +389,107 @@ static int do_getattr(const char *path, struct stat *st)
 	}
 	
 
+
+
+
+
+	
+	
+	
+
+
+
+
+
 	return returnStatus;
 
 }
 
 static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
+
+
+	cout << "\n\n\nUpdating Online Content------------------------" << endl;
+	translateListOfFiles();
+	while(wait == 0){
+
+	}
+	cout << "Finished Waiting" <<endl;
+	wait = 0;
+	if(listOfFiles.size() > contentMap.size()){
+		translateDHTEntry();
+		while(wait == 0){
+
+		}
+		cout << "Finished Waiting" <<endl;
+		wait = 0;
+	}
+	cout << "Content updated to latest ODHT Table---------------------\n\n\n\n\n\n" << endl;
+
+
+
+
+
+
+
+
+	cout << "\n\n\n\n\n------------ Synchro Table ------------\n\n";
+	cout << "Synching to Files================================\n";
+	if(listOfFiles.size()!= 0)
+	{
+		cout << "Current Size of Files: " << listOfFiles.size() << endl;
+		int count = 0;
+		for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)
+		{
+			cout << *i << " --index: "<< count << "\n";
+			count ++;
+		}
+		cout << endl;
+	}
+	cout << "Finished Synching ================================\n\n";
+
+	
+	cout << "Synching to Written Content================================\n\n";
+	if(contentMap.size()!= 0)
+	{
+		cout << "Current Size of Content: " << contentMap.size() << endl;
+		cout << "PRINTING MAP CONTENT\n";
+		for(auto& x: contentMap){
+			cout << x.first << " : " << x.second << endl;
+		}
+	}
+	cout << "Finished Synching ================================\n\n";
+	
+
+	cout << "Synching New Files=================================\n\n";
+
+	std::set_difference(listOfFiles.begin(), listOfFiles.end(), PlistOfFiles.begin(), PlistOfFiles.end(),
+						std::inserter(newFiles, newFiles.end()));
+
+	if(newFiles.size()!= 0)
+	{
+		for(auto i = newFiles.begin(); i != newFiles.end(); ++i)
+		{
+			cout << *i << ", ";
+		}
+		cout << endl;
+	}
+
+	cout << "Finished New Files=================================\n\n\n\n";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	int retstat = 0;
 	order++;
 	printf("---------------------------------------------------------------do_readdir: %i\n", order);
@@ -541,7 +537,6 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 }
 
 /*
-
 */
 
 static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
@@ -781,16 +776,34 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		return -errno;
 	}
 
-	//Take care of swp files
+	mtx.lock();
 	std::string found = path;
-	cout << "Checking to remove swap files. Current File Name is: " << found << endl;
-	std::size_t look = found.find(".swp");
-	if(look == std::string::npos){
+	cout << "TURNED PATH INTO A STIRNG " << found <<endl;
+	if(found.find(".swp") != std::string::npos){
+		cout << "FOUND SWAP FILE IGNORING IT!" <<endl;
+	}else{
 		cout << "... UPLOADING TO OPENDHT\n";
-		node.put("LIST_OF_FILENAMES", path);
-		node.put(path, buffer);
+		wait = 0;
+		node.put("LIST_OF_FILES", path,
+		[](bool success){
+			std::cout << "Put Path Finished with " << (success ? " Success." : " Failure.") << endl;
+			wait = 1;
+		});
+		while(wait == 0){
+
+		}
+		wait = 0;
+		node.put(path, buffer,
+		[](bool success){
+			std::cout << "Put Content Finished with " << (success ? " Success." : " Failure.") << endl;
+			wait = 1;
+		});
+		while(wait == 0){
+
+		}
+		wait = 0;
 	}
-	
+	mtx.unlock();
 
 	// translateDHTEntry(path);
 	//cout << "translateDHTEntry: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" << dataRetrieved << endl;
@@ -1078,16 +1091,3 @@ int main(int argc, char *argv[])
 
 	return returnStatus;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
