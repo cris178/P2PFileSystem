@@ -70,12 +70,15 @@ int order = 0;
 
 
 
+int wait = 0;
+
+
 std::set<std::string> listOfFiles;
 
 int translateListOfFiles() 
 {
 	// listOfFiles.clear();
-	
+	wait = 0;
 	node.get((char*)"LIST_OF_FILES", 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
@@ -110,7 +113,9 @@ int translateListOfFiles()
     },
 		[](bool success) {
 			std::cout << "\n\n\n\nNODE GET LIST OF FILES Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+			wait = 1;
 		});
+		while(wait == 0){}
 
 		return 0;
 }
@@ -407,12 +412,19 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	// 	return -errno;
 	// }
 
+	wait = 0;
 	node.put("LIST_OF_FILES", path, [](bool success) {
-			std::cout << "\n\n\n\nNODE PUT LIST_OF_FILES Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+			std::cout << "\n\n\n\nNODE PUT LIST_OF_FILES Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl; 
+			wait = 1;
 		});
+	while (wait == 0){}
+
+	wait = 0;
 	node.put(path, buffer, [](bool success) {
-			std::cout << "\n\n\n\nNODE PUT CONTENT. Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+			std::cout << "\n\n\n\nNODE PUT CONTENT. Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl; 
+			wait = 1;
 		});
+	while (wait == 0){}
 
 	return retstat;
 }
@@ -439,7 +451,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-
+		wait = 0;
 		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -479,7 +491,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 			},
 			[](bool success) {
 			std::cout << "\n\n\n\nNODE GET CONTENT Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+			wait = 1;
 		});
+		while(wait==0){}
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -493,18 +507,18 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
 
-	// char fpath[PATH_MAX];
-	// strncpy(fpath, mountpoint.path, PATH_MAX);
-	// strncat(fpath, path, PATH_MAX);
+	char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
 
-	// std::ofstream myfile;
-	// cout << "fpath: " << fpath << endl;
-	// myfile.open (fpath);
-	// cout << "2" << endl;
-	// myfile << finalString;
-	// cout << "3" << endl;
-	// myfile.close();
-	// cout << "4" << endl;
+	std::ofstream myfile;
+	cout << "fpath: " << fpath << endl;
+	myfile.open (fpath);
+	cout << "2" << endl;
+	myfile << finalString;
+	cout << "3" << endl;
+	myfile.close();
+	cout << "4" << endl;
 
 
 
