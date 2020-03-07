@@ -536,6 +536,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	// buffer = new char[finalString.size()];
 	// buffer = (char*)finalString.c_str();
 
+	mtx.lock();
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
 
@@ -551,6 +552,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	cout << "3" << endl;
 	myfile.close();
 	cout << "4" << endl;
+	mtx.unlock();	
 
 	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER ON RETURN:" << buffer << "--SIZE ON RETURN:" << size << endl;
 	return size;
