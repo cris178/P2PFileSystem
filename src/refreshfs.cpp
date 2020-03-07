@@ -432,6 +432,44 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 }
 
 
+
+
+static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+	order++;
+	printf("--------------------------------------------------------------------------------------------dowrite: %i\n", order);
+
+	
+
+	char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+	printf("Full absolute path created: %s\n", fpath);
+	
+
+	int retstat = 0;
+
+	retstat = pwrite(fi->fh, buffer, size, offset);
+
+	cout << "fpath also caoncatenated and put in node \n" ;
+
+
+	if(retstat < 0)
+	{
+		perror("error in do_write ");
+		return -errno;
+	}
+
+	node.put("LIST_OF_FILES", path);
+	node.put(path, buffer);
+
+	return retstat;
+}
+
+
+
+
+
 // bool updatingFile = false;
 static int do_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
 {
@@ -443,13 +481,15 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	std::mutex mtx;           // mutex for critical section
 	std::string pathAsString = path; 
 
+	std::string finalString;
+
 	if(    listOfFiles.find(pathAsString) != listOfFiles.end()   )
 	{
 
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
-		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi](const std::vector<std::shared_ptr<dht::Value>>& values)  
+		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
@@ -460,7 +500,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					mystream << *value;
 					dataAsString = mystream.str();
 
+					cout << "dataAsSting Before+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++:"<<dataAsString <<endl;
 					dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
+					cout << "dataAsSting After+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++:"<<dataAsString <<endl;
 					dataAsString.pop_back();
 
 					int len = dataAsString.length();
@@ -472,25 +514,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 						newString.push_back(chr);
 					}
 
-					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
 
-
-					buffer = (char*)newString.c_str();
-					size = strlen(buffer);
-
-					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER:" << buffer << "SIZE:" << size << endl;
-
-					int retstat2 = pwrite(fi->fh, buffer, size, offset);
-					
-
-
-					if(retstat2 < 0)
-					{
-						perror("error in do_read PWRITE ");
-					}
-
-
-					cout << "WROTE IT++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+					finalString = newString;
+					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << finalString << endl << endl; 
 
 					break;
 				}
@@ -503,20 +529,16 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-			
-			int retstat = pread(fi->fh, buffer, size, offset);
-			
-			if(retstat < 0)
-			{
-				perror("error in do_read ");
-				mtx.unlock();
-				return -errno;
-
-			}
-
 			mtx.unlock();	
 	}
-		cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+	
+	// buffer = new char[finalString.size()];
+	// buffer = (char*)finalString.c_str();
+
+	memcpy(buffer, finalString.c_str(), finalString.size());
+	size = strlen(buffer);
+	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER ON RETURN:" << buffer << "--SIZE ON RETURN:" << size << endl;
 	return strlen(buffer);
 	
 }
@@ -712,37 +734,6 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
 	return retstat;
 }
 
-static int do_write(const char *path, const char *buffer, size_t size, off_t offset, struct fuse_file_info *fi)
-{
-	order++;
-	printf("--------------------------------------------------------------------------------------------dowrite: %i\n", order);
-
-	
-
-	char fpath[PATH_MAX];
-	strncpy(fpath, mountpoint.path, PATH_MAX);
-	strncat(fpath, path, PATH_MAX);
-	printf("Full absolute path created: %s\n", fpath);
-	
-
-	int retstat = 0;
-
-	retstat = pwrite(fi->fh, buffer, size, offset);
-
-	cout << "fpath also caoncatenated and put in node \n" ;
-
-
-	if(retstat < 0)
-	{
-		perror("error in do_write ");
-		return -errno;
-	}
-
-	node.put("LIST_OF_FILES", path);
-	node.put(path, buffer);
-
-	return retstat;
-}
 
 /**
  * Check file access permissions
