@@ -424,23 +424,34 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		return -errno;
 	}
 
-
-	wait = 0;
-	node.put("LIST_OF_FILES", path, [](bool success) 
-		{
-			std::cout << "\n\nnode.put(LIST_OF_FILES, path) ------------ with " << (success ? "success" : "failure") << std::endl;
-			wait = 1;
-		});
-	while(wait == 0){}
+	
 
 
-	wait = 0;
-	node.put(path, buffer, [](bool success) 
-		{
-			std::cout << "\n\nnode.put(path, buffer) ------------ with " << (success ? "success" : "failure") << std::endl;
-			wait = 1;
-		});
-	while(wait == 0){}
+
+
+	std::string found = path;
+	if(found.find(".swp") == std::string::npos){
+		wait = 0;
+		node.put("LIST_OF_FILES", path, [](bool success) 
+			{
+				std::cout << "\n\nnode.put(LIST_OF_FILES, path) ------------ with " << (success ? "success" : "failure") << std::endl;
+				wait = 1;
+			});
+		while(wait == 0){}
+
+
+		wait = 0;
+		node.put(path, buffer, [](bool success) 
+			{
+				std::cout << "\n\nnode.put(path, buffer) ------------ with " << (success ? "success" : "failure") << std::endl;
+				wait = 1;
+			});
+		while(wait == 0){}
+
+	}
+
+
+	
 
 	return retstat;
 }
@@ -462,12 +473,13 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 	std::string finalString;
 
+	wait = 0;
 	if(    listOfFiles.find(pathAsString) != listOfFiles.end()   )
 	{
 
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-
+		
 		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -509,13 +521,14 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					std::cout << "\n\nnode.get(CONTENT) ------------ with " << (success ? "success" : "failure") << std::endl;
 					wait = 1;
 				});
-			while(wait == 0){}
+			
 			
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 			mtx.unlock();	
 	}
+	while(wait == 0){}
 	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
 	memcpy(buffer, finalString.c_str(), finalString.size());
@@ -973,7 +986,7 @@ int main(int argc, char *argv[])
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    node.bootstrap("10.0.2.4", "4224");
+    node.bootstrap("bootstrap.jami.net", "4222");
 
     // std::cout << "P Data" << std::endl;
     // node.put("fpath", "buffer");
