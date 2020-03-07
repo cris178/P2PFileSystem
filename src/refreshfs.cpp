@@ -520,7 +520,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					finalString = newString;
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << finalString << endl << endl; 
 
-					break;
+					//break;
 				}
 
 				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
