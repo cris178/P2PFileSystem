@@ -538,8 +538,29 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
+
+	char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+
+	std::ofstream myfile;
+	cout << "fpath: " << fpath << endl;
+	myfile.open (fpath);
+	cout << "2" << endl;
+	myfile << finalString;
+	cout << "3" << endl;
+	myfile.close();
+	cout << "4" << endl;
+
+
+
+
+
+
+
+
 	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER ON RETURN:" << buffer << "--SIZE ON RETURN:" << size << endl;
-	return strlen(buffer);
+	return size;
 	
 }
 
