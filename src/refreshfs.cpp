@@ -33,6 +33,8 @@ using std::endl;
 
 #define PATH_MAX 4096
 
+bool wait = 0;
+
 struct refreshfs_dirp
 {
 	DIR *dp;
@@ -77,6 +79,7 @@ int translateDHTEntry(const char* path, char *buffer, size_t size, off_t offset,
 {
 
 	int retstat=0;
+	wait = 0;
 	node.get(path, 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
@@ -118,7 +121,11 @@ int translateDHTEntry(const char* path, char *buffer, size_t size, off_t offset,
 		// usleep(1000);
 
 		return true; // return false to stop the search
-    });
+    },
+		[](bool success) {
+			std::cout << "\n\n------------Get Content from openDHT finished with " << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
 
 		return 0;
 }
@@ -131,7 +138,7 @@ std::set<std::string> listOfFiles;
 int translateListOfFiles() 
 {
 	// listOfFiles.clear();
-	
+	wait = 0;
 	node.get((char*)"LIST_OF_FILES", 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
@@ -163,7 +170,11 @@ int translateListOfFiles()
 		}
 
 		return true; // return false to stop the search
-    });
+    },
+		[](bool success) {
+			std::cout << "\n\n------------Get Path from OpenDHT finished with " << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
 
 		return 0;
 }
@@ -285,6 +296,9 @@ static int do_getattr(const char *path, struct stat *st)
 {
 	newFiles.clear();
 	translateListOfFiles();
+	while(wait == 0){
+				
+	}
 
 	cout << "List of Files After Update=======================================================================================================================\n";
 	if(listOfFiles.size()!= 0)
@@ -460,10 +474,28 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		return -errno;
 	}
 
+	std::string found = path;
+	if(found.find(".swp") != std::string::npos){
+		cout << "FOUND SWAP FILE IGNORING IT!" <<endl;
+	}else{
+		wait = 0;
+		node.put("LIST_OF_FILES", path,[](bool success) {
+				std::cout << "\n\n------------Get new file in getattr finished with " << (success ? "success" : "failure") << std::endl;
+				wait = 1;
+		});
+		while(wait == 0){
 
+		}
 
-	node.put("LIST_OF_FILES", path);
-	node.put(path, buffer);
+		node.put(path, buffer,[](bool success) {
+				std::cout << "\n\n------------Get new file in getattr finished with " << (success ? "success" : "failure") << std::endl;
+				wait = 1;
+		});;
+		while(wait == 0){
+
+		}
+	}
+	
 
 	return retstat;
 }
@@ -490,7 +522,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-
+		wait = 0;
 		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -520,23 +552,52 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					finalString = newString;
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << finalString << endl << endl; 
 
-					//break;
+					break;
 				}
 
 				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
 				mtx.unlock();
 				return true;
+			},[](bool success) {
+				std::cout << "\n\n------------Get new file in getattr finished with " << (success ? "success" : "failure") << std::endl;
+				wait = 1;
 			});
+			while(wait == 0){
 
+			}
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 			mtx.unlock();	
 	}
 	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+	
+	// buffer = new char[finalString.size()];
+	// buffer = (char*)finalString.c_str();
 
+	cout << "Final String::::::" << finalString << endl;
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
+
+	char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+
+	std::ofstream myfile;
+	cout << "fpath: " << fpath << endl;
+	myfile.open (fpath);
+	cout << "2" << endl;
+	myfile << finalString;
+	cout << "3" << endl;
+	myfile.close();
+	cout << "4" << endl;
+
+
+
+
+
+
+
 
 	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER ON RETURN:" << buffer << "--SIZE ON RETURN:" << size << endl;
 	return size;
@@ -990,7 +1051,7 @@ int main(int argc, char *argv[])
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    node.bootstrap("10.0.2.4", "4224");
+    node.bootstrap("bootstrap.jami.net", "4222");
 
     // std::cout << "P Data" << std::endl;
     // node.put("fpath", "buffer");
