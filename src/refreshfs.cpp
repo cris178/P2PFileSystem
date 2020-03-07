@@ -436,6 +436,7 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 			{
 				std::cout << "\n\nnode.put(LIST_OF_FILES, path) ------------ with " << (success ? "success" : "failure") << std::endl;
 				wait = 1;
+				
 			});
 		while(wait == 0){}
 
@@ -516,19 +517,22 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 				mtx.unlock();
 				return true;
-			}, [](bool success) 
+			}, [&finalString](bool success) 
 				{
 					std::cout << "\n\nnode.get(CONTENT) ------------ with " << (success ? "success" : "failure") << std::endl;
 					wait = 1;
+					if(!success){
+						finalString = "FAILED to RETRIEVE DATA FROM OPENDHT"
+					}
 				});
-			
+				while(wait == 0){}
 			
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 			mtx.unlock();	
 	}
-	while(wait == 0){}
+	
 	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
 	memcpy(buffer, finalString.c_str(), finalString.size());
