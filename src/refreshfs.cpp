@@ -300,11 +300,15 @@ bool updateInProgress = false;
 static int do_getattr(const char *path, struct stat *st)
 {
 
+
+
 	std::string pathStrigify = path;
 	if(listOfFiles.find(pathStrigify) != listOfFiles.end()    )
 	{
-		cout << "Current path provided is in our DHT\n";
+		cout << "Current path provided is in our ODHT\n";
 	}
+
+	
 	
 	//bool contentRetrieved = translateDHTEntry(path); //update list
 
@@ -359,6 +363,27 @@ static int do_getattr(const char *path, struct stat *st)
 
 	int returnStatus;
 
+
+	const bool isINFILES = listOfFiles.find(path) != listOfFiles.end();
+	st->st_uid = getuid();
+	st->st_gid = getgid();
+	if(strcmp(path,"/") == 0){
+		st->st_mode = __S_IFDIR | 0755;
+		st->st_nlink = 2;
+		return 0;
+	}else if(isINFILES ){
+		cout << "IS IN ____OPENDHT" << endl;
+		
+		//st->st_atim = time(now);
+		//st->st_mtim = time(now);
+		st->st_mode = __S_IFREG | 0644;
+		st->st_nlink = 1;
+		st->st_size = 1024;
+		return 0;
+	}else{
+		cout << "IS NOT ____OPENDHT" << endl;
+		return -ENONET;
+	}
 
 	char fpath[PATH_MAX];
 	strncpy(fpath, mountpoint.path, PATH_MAX);
@@ -482,7 +507,7 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 
 
 
-
+	
 
 
 
@@ -494,6 +519,31 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
 	order++;
 	printf("---------------------------------------------------------------do_readdir: %i\n", order);
 	
+
+
+
+	//Root dir stuff
+	filler(buffer, ".", NULL, 0);
+	filler(buffer, "..", NULL, 0);
+
+	std::set<std::string>::iterator it = listOfFiles.begin();
+	//Add extra entires
+	if(listOfFiles.size()>0){
+		if(strcmp(path,"/") == 0){
+			while(it != listOfFiles.end()){
+				//Add name of every OPDHT file
+				filler(buffer, (char*)(*it).c_str(), NULL, 0);
+			}
+		}
+	}
+	return 0;
+
+
+
+
+
+
+
 		
 	DIR *dp;
 	struct dirent *de;
@@ -532,7 +582,17 @@ static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, of
     } 
 	while ((de = readdir(dp)) != NULL);
     
-   
+
+
+
+	
+
+
+
+
+
+
+
 	return retstat;
 }
 
@@ -545,7 +605,19 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	printf("-----------------------------------------------------------------------------doread: %i\n", order);
 	int retstat = 0;
 
-	
+	const bool isINFILES = listOfFiles.find(path) != listOfFiles.end();
+	if(isINFILES){
+
+		std::string key = path;
+		cout << "Reading: " << contentMap.find(key)->second << endl;
+		
+		memcpy(buffer, (char*)contentMap.find(key)->second.c_str() + offset,size);
+		return strlen((char*)contentMap.find(key)->second.c_str()) - offset;
+	}else{
+		return -1;
+	}
+
+
 
 	retstat = pread(fi->fh, buffer, size, offset);
 
@@ -571,6 +643,26 @@ static int do_mkdir(const char *path, mode_t mode)
 	printf("Full absolute path created: %s\n", fpath);
 
 
+	mtx.lock();
+	std::string found = path;
+	cout << "TURNED PATH INTO A STIRNG " << found <<endl;
+	
+	cout << "... UPLOADING TO OPENDHT\n";
+	wait = 0;
+	node.put("LIST_OF_DIR", path,
+	[](bool success){
+		std::cout << "Put Path Finished with " << (success ? " Success." : " Failure.") << endl;
+		wait = 1;
+	});
+	while(wait == 0){
+
+	}
+	wait = 0;
+	
+	mtx.unlock();
+	return 0;
+
+	/* Might not need if made in getattr
 	returnStatus = mkdir(fpath, mode);
 
 	if (returnStatus < 0)
@@ -579,6 +671,7 @@ static int do_mkdir(const char *path, mode_t mode)
 		return -errno;
 	}
 	return returnStatus;
+	*/
 }
 
 
@@ -711,7 +804,8 @@ static int do_mknod(const char *path, mode_t mode, dev_t rdev)
     // make a fifo, but saying it should never actually be used for
     // that.
 	
-
+	//If everything is going to be downloaded don't need to make the nod
+	return 0;
 
     if (S_ISREG(mode)) 
 	{
@@ -755,26 +849,11 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	order++;
 	printf("--------------------------------------------------------------------------------------------dowrite: %i\n", order);
 
-	
+	/*
+	if(inLocalFiles){
 
-	char fpath[PATH_MAX];
-	strncpy(fpath, mountpoint.path, PATH_MAX);
-	strncat(fpath, path, PATH_MAX);
-	printf("Full absolute path created: %s\n", fpath);
-	
+	}*/
 
-	int retstat = 0;
-
-	retstat = pwrite(fi->fh, buffer, size, offset);
-
-	cout << "fpath also caoncatenated and put in node \n" ;
-
-
-	if(retstat < 0)
-	{
-		perror("error in do_write ");
-		return -errno;
-	}
 
 	mtx.lock();
 	std::string found = path;
@@ -804,6 +883,30 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		wait = 0;
 	}
 	mtx.unlock();
+	return size;
+
+
+
+	char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+	printf("Full absolute path created: %s\n", fpath);
+	
+
+	int retstat = 0;
+
+	retstat = pwrite(fi->fh, buffer, size, offset);
+
+	cout << "fpath also caoncatenated and put in node \n" ;
+
+
+	if(retstat < 0)
+	{
+		perror("error in do_write ");
+		return -errno;
+	}
+
+	
 
 	// translateDHTEntry(path);
 	//cout << "translateDHTEntry: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" << dataRetrieved << endl;
@@ -993,24 +1096,29 @@ static struct hello_fuse_operations:fuse_operations
 	readdir = do_readdir;
 	getdir = NULL; //Deprecated
 	mknod = do_mknod; //Creates non directory, non sym link nodes
-	opendir = do_opendir;
-	open = do_open;
+	/*opendir = do_opendir;
+	open = do_open;*/
 	read = do_read;
 	mkdir = do_mkdir; //makes a directory node
+	/*
 	unlink = do_unlink; //removes a file
-	
+	*/
+
 	//symlink = do_symlink; //Who cares about symbolic links
     rename = do_rename; //rename a file or directory
 
 	//link = do_link; Hard link meh who cares
   	//chmod = do_chmod; Change the permission bits, doesn't matter for our project
   	//chown = do_chown; change the owner or group of a file
-  	truncate = do_truncate; //change size of file
-
+  	
+	  /*
+	truncate = do_truncate; //change size of file
 	utime = do_utime;  //change access/modification time
 	rmdir = do_rmdir; //removes a directory
-	
+	*/
+
 	write = do_write;
+	/*
 	release = do_release;
 	statfs = do_statfs;
 	flush = do_flush;
@@ -1018,7 +1126,7 @@ static struct hello_fuse_operations:fuse_operations
 
 	access= do_access;
 
-	fsyncdir = do_fsyncdir;
+	fsyncdir = do_fsyncdir;*/
 	}
 } operations;
 
