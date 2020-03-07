@@ -332,7 +332,7 @@ static int do_getattr(const char *path, struct stat *st)
 			cout << "fpath: " << fpath << endl;
 			myfile.open (fpath);
 			cout << "2" << endl;
-			myfile << "GET_FROM_DHT";
+			myfile << "GET_FROM_DHT_GET_FROM_DHT_GET_FROM_DHT_GET_FROM_DHT_GET_FROM_DHT_GET_FROM_DHT";
 			cout << "3" << endl;
 			myfile.close();
 			cout << "4" << endl;
@@ -449,16 +449,16 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 
 	int retstat = 0;
 
-	retstat = pwrite(fi->fh, buffer, size, offset);
+	// retstat = pwrite(fi->fh, buffer, size, offset);
 
 	cout << "fpath also caoncatenated and put in node \n" ;
 
 
-	if(retstat < 0)
-	{
-		perror("error in do_write ");
-		return -errno;
-	}
+	// if(retstat < 0)
+	// {
+	// 	perror("error in do_write ");
+	// 	return -errno;
+	// }
 
 	node.put("LIST_OF_FILES", path);
 	node.put(path, buffer);
@@ -518,7 +518,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					finalString = newString;
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << finalString << endl << endl; 
 
-					break;
+					//break;
 				}
 
 				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -539,18 +539,18 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
 
-	char fpath[PATH_MAX];
-	strncpy(fpath, mountpoint.path, PATH_MAX);
-	strncat(fpath, path, PATH_MAX);
+	// char fpath[PATH_MAX];
+	// strncpy(fpath, mountpoint.path, PATH_MAX);
+	// strncat(fpath, path, PATH_MAX);
 
-	std::ofstream myfile;
-	cout << "fpath: " << fpath << endl;
-	myfile.open (fpath);
-	cout << "2" << endl;
-	myfile << finalString;
-	cout << "3" << endl;
-	myfile.close();
-	cout << "4" << endl;
+	// std::ofstream myfile;
+	// cout << "fpath: " << fpath << endl;
+	// myfile.open (fpath);
+	// cout << "2" << endl;
+	// myfile << finalString;
+	// cout << "3" << endl;
+	// myfile.close();
+	// cout << "4" << endl;
 
 
 
