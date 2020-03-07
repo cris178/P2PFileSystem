@@ -1,4 +1,16 @@
 
+
+
+// wait = 0;
+// node.put("LIST_OF_FILES", path,[](bool success) 
+// {
+// 		std::cout << "\n\n------------Get new file in getattr finished with " << (success ? "success" : "failure") << std::endl;
+// 		wait = 1;
+// });
+
+// while(wait == 0){}
+
+
 #define FUSE_USE_VERSION 30
 
 #include <fuse.h>
@@ -67,61 +79,7 @@ dht::DhtRunner node;
 
 
 int order = 0;
-
-
-
-
-
-std::string dataRetrieved;
-int translateDHTEntry(const char* path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi) 
-{
-
-	int retstat=0;
-	node.get(path, 
-	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
-	{
-
-		
-		// Callback called when values are found
-		for (const auto& value : values)
-		{
-			std::stringstream mystream;
-			std::string dataAsString;
-			mystream << *value;
-			dataAsString = mystream.str();
-
-			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
-			dataAsString.pop_back();
-
-			int len = dataAsString.length();
-			std::string newString;
-			for(int i=0; i< len; i+=2)
-			{
-				std::string byte = dataAsString.substr(i,2);
-				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
-				newString.push_back(chr);
-			}
-
-			cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
-			retstat = pread(fi->fh, (char*)newString.c_str(), (size_t)strlen((char*)newString.c_str()), offset);
-
-			// if(retstat < 0)
-			// {
-			// 	perror("error in do_read ");
-			// 	return -errno;
-			// }
-			// sleep(30);
-			// dataRetrieved = newString;
-			// cout << dataRetrieved <<endl;
-		}
-
-		// usleep(1000);
-
-		return true; // return false to stop the search
-    });
-
-		return 0;
-}
+int wait = 0;
 
 
 
@@ -132,6 +90,7 @@ int translateListOfFiles()
 {
 	// listOfFiles.clear();
 	
+	wait = 0;
 	node.get((char*)"LIST_OF_FILES", 
 	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
 	{
@@ -163,7 +122,12 @@ int translateListOfFiles()
 		}
 
 		return true; // return false to stop the search
-    });
+    }, [](bool success) 
+		{
+			std::cout << "\n\nnode.get(LIST_OF_FILES) ------------ with " << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
+	while(wait == 0){}
 
 		return 0;
 }
@@ -461,9 +425,22 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	}
 
 
+	wait = 0;
+	node.put("LIST_OF_FILES", path, [](bool success) 
+		{
+			std::cout << "\n\nnode.put(LIST_OF_FILES, path) ------------ with " << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
+	while(wait == 0){}
 
-	node.put("LIST_OF_FILES", path);
-	node.put(path, buffer);
+
+	wait = 0;
+	node.put(path, buffer, [](bool success) 
+		{
+			std::cout << "\n\nnode.put(path, buffer) ------------ with " << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
+	while(wait == 0){}
 
 	return retstat;
 }
@@ -527,7 +504,13 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 				mtx.unlock();
 				return true;
-			});
+			}, [](bool success) 
+				{
+					std::cout << "\n\nnode.get(CONTENT) ------------ with " << (success ? "success" : "failure") << std::endl;
+					wait = 1;
+				});
+			while(wait == 0){}
+			
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
