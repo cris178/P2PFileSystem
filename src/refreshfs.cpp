@@ -70,62 +70,6 @@ int order = 0;
 
 
 
-
-
-std::string dataRetrieved;
-int translateDHTEntry(const char* path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi) 
-{
-
-	int retstat=0;
-	node.get(path, 
-	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
-	{
-
-		
-		// Callback called when values are found
-		for (const auto& value : values)
-		{
-			std::stringstream mystream;
-			std::string dataAsString;
-			mystream << *value;
-			dataAsString = mystream.str();
-
-			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
-			dataAsString.pop_back();
-
-			int len = dataAsString.length();
-			std::string newString;
-			for(int i=0; i< len; i+=2)
-			{
-				std::string byte = dataAsString.substr(i,2);
-				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
-				newString.push_back(chr);
-			}
-
-			cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << newString << endl << endl; 
-			retstat = pread(fi->fh, (char*)newString.c_str(), (size_t)strlen((char*)newString.c_str()), offset);
-
-			// if(retstat < 0)
-			// {
-			// 	perror("error in do_read ");
-			// 	return -errno;
-			// }
-			// sleep(30);
-			// dataRetrieved = newString;
-			// cout << dataRetrieved <<endl;
-		}
-
-		// usleep(1000);
-
-		return true; // return false to stop the search
-    });
-
-		return 0;
-}
-
-
-
-
 std::set<std::string> listOfFiles;
 
 int translateListOfFiles() 
@@ -163,7 +107,10 @@ int translateListOfFiles()
 		}
 
 		return true; // return false to stop the search
-    });
+    },
+		[](bool success) {
+			std::cout << "\n\n\n\nNODE GET LIST OF FILES Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+		});
 
 		return 0;
 }
@@ -460,8 +407,12 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 	// 	return -errno;
 	// }
 
-	node.put("LIST_OF_FILES", path);
-	node.put(path, buffer);
+	node.put("LIST_OF_FILES", path, [](bool success) {
+			std::cout << "\n\n\n\nNODE PUT LIST_OF_FILES Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+		});
+	node.put(path, buffer, [](bool success) {
+			std::cout << "\n\n\n\nNODE PUT CONTENT. Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+		});
 
 	return retstat;
 }
@@ -525,7 +476,10 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 				mtx.unlock();
 				return true;
-			});
+			},
+			[](bool success) {
+			std::cout << "\n\n\n\nNODE GET CONTENT Retrive, Translate, Scan CONTENT in ODHT..." << (success ? "success" : "failure") << std::endl;
+		});
 
 			mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
