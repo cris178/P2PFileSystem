@@ -467,7 +467,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-
+		wait = 0;
 		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -973,7 +973,7 @@ int main(int argc, char *argv[])
 
     // Join the network through any running node,
     // here using a known bootstrap node.
-    node.bootstrap("10.0.2.4", "4224");
+    node.bootstrap("bootstrap.jami.net", "4222");
 
     // std::cout << "P Data" << std::endl;
     // node.put("fpath", "buffer");
