@@ -430,7 +430,9 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 
 
 	std::string found = path;
-	if(found.find(".swp") == std::string::npos){
+	if(found.find(".swp") != std::string::npos){
+		cout << "SWAP FILE FOUND\n";
+	}else{
 		wait = 0;
 		node.put("LIST_OF_FILES", path, [](bool success) 
 			{
@@ -448,7 +450,6 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 				wait = 1;
 			});
 		while(wait == 0){}
-
 	}
 
 
@@ -522,7 +523,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					std::cout << "\n\nnode.get(CONTENT) ------------ with " << (success ? "success" : "failure") << std::endl;
 					wait = 1;
 					if(!success){
-						finalString = "FAILED to RETRIEVE DATA FROM OPENDHT"
+						finalString = "FAILED to RETRIEVE DATA FROM OPENDHT\n";
 					}
 				});
 				while(wait == 0){}
