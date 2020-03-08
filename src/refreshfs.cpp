@@ -40,6 +40,8 @@
 #include <thread>         // std::thread
 #include <mutex>          // std::mutex
 
+#include <ctime>
+
 using std::cout;
 using std::endl;
 
@@ -443,8 +445,22 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 		while(wait == 0){}
 
 
+		std::stringstream ss;
+		ss << std::time(0);
+		std::string timeInSeconds = ss.str();
+		cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++TIME IS:" << timeInSeconds << endl;
+
+
+		std::string tempString;
+		tempString.append(timeInSeconds);
+		tempString.append(" ");
+		tempString.append(buffer);
+		
+
+
+		cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++PUTTING BUFFER:" << tempString << endl;
 		wait = 0;
-		node.put(path, buffer, [](bool success) 
+		node.put(path, tempString.c_str(), [](bool success) 
 			{
 				std::cout << "\n\nnode.put(path, buffer) ------------ with " << (success ? "success" : "failure") << std::endl;
 				wait = 1;
@@ -481,9 +497,11 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-		
+	
+
 		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
+				int longestTime = 0;
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
 				for (const auto& value : values)
@@ -508,9 +526,22 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					}
 
 
-					finalString = newString;
-					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL: " << finalString << endl << endl; 
+					
+					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++NEW STRING: " << newString << endl << endl; 
 
+  					std::string newTime = newString.substr(0, newString.find(" "));
+
+					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++NEW TIME: " << newTime << endl << endl; 
+					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++LONGEST TIME: " << longestTime << endl; 
+
+					if(std::stoi(newTime) > longestTime)
+					{
+						longestTime = std::stoi(newTime);
+						finalString = newString;
+						cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE LONGEST TIME: " << longestTime << endl; 
+						cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE FINAL STRING: " << finalString << endl; 
+
+					}
 					//break;
 				}
 
@@ -536,6 +567,8 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	
 	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
+
+	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL STRING BEFORE MEMCPY: " << finalString << endl; 
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
 
