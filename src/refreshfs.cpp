@@ -298,7 +298,7 @@ static int do_getattr(const char *path, struct stat *st)
 			cout << "fpath: " << fpath << endl;
 			myfile.open (fpath);
 			cout << "2" << endl;
-			myfile << "GET_FROM_DHT";
+			myfile << "GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT GET_FROM_DHT";
 			cout << "3" << endl;
 			myfile.close();
 			cout << "4" << endl;
