@@ -575,7 +575,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	size = strlen(buffer);
 
 	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER ON RETURN:" << buffer << "--SIZE ON RETURN:" << size << endl;
-	return size;
+	return size - offset;
 	
 }
 
