@@ -501,7 +501,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
-				int longestTime = 0;
+				unsigned long long longestTime = 0;
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
 				for (const auto& value : values)
@@ -534,9 +534,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++NEW TIME: " << newTime << endl << endl; 
 					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++LONGEST TIME: " << longestTime << endl; 
 
-					if(std::stoi(newTime) > longestTime)
+					if(std::stoull(newTime) > longestTime)
 					{
-						longestTime = std::stoi(newTime);
+						longestTime = std::stoull(newTime);
 						finalString = newString;
 						cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE LONGEST TIME: " << longestTime << endl; 
 						cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE FINAL STRING: " << finalString << endl; 
@@ -569,6 +569,8 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 
 	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++FINAL STRING BEFORE MEMCPY: " << finalString << endl; 
+	
+	finalString = finalString.substr(finalString.find(" "), std::string::npos );
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
 
