@@ -498,10 +498,10 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 		mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 	
-
-		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString](const std::vector<std::shared_ptr<dht::Value>>& values)  
+		unsigned long long longestTime = 0;
+		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString, &longestTime](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
-				unsigned long long longestTime = 0;
+				
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
 				for (const auto& value : values)
