@@ -135,7 +135,54 @@ int translateListOfFiles()
 }
 
 
+std::set<std::string> listOfDirs;
 
+
+int translateListOfDirs() 
+{
+	// listOfFiles.clear();
+	
+	wait = 0;
+	node.get((char*)"LIST_OF_DIRS", 
+	[&](const std::vector<std::shared_ptr<dht::Value>>& values)  
+	{
+
+		
+		// Callback called when values are found
+		for (const auto& value : values)
+		{
+			std::stringstream mystream;
+			std::string dataAsString;
+			// std::cout << value.ValueType << endl;
+			mystream << *value;
+			dataAsString = mystream.str();
+
+			dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
+			dataAsString.pop_back();
+
+
+			int len = dataAsString.length();
+			std::string newString;
+			for(int i=0; i< len; i+=2)
+			{
+				std::string byte = dataAsString.substr(i,2);
+				char chr = (char) (int)strtol(byte.c_str(), NULL, 16);
+				newString.push_back(chr);
+			}
+			
+			listOfDirs.insert(newString);
+		}
+
+		return true; // return false to stop the search
+    }, [](bool success) 
+		{
+			std::cout << "\n\nnode.get(LIST_OF_Dirs) ------------ with " << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+		});
+	while(wait == 0){}
+
+		return 0;
+}
 
 //Initially no entries in each of the arrays so index -1
 int do_release(const char *path, struct fuse_file_info *fi)
@@ -242,15 +289,18 @@ int do_opendir(const char *path, struct fuse_file_info *fi)
 
 // Fill in s1 and s2 with values
 std::set<std::string> newFiles;
+std::set<std::string> newDirs;
 
 
 std::set<std::string> PlistOfFiles;
+std::set<std::string> PlistOfDirs;
 bool updateInProgress = false;
 
 static int do_getattr(const char *path, struct stat *st)
 {
 	newFiles.clear();
 	translateListOfFiles();
+	translateListOfDirs();
 
 	cout << "List of Files After Update=======================================================================================================================\n";
 	if(listOfFiles.size()!= 0)
@@ -271,6 +321,17 @@ static int do_getattr(const char *path, struct stat *st)
 	std::set_difference(listOfFiles.begin(), listOfFiles.end(), PlistOfFiles.begin(), PlistOfFiles.end(),
 						std::inserter(newFiles, newFiles.end()));
 
+	std::set_difference(listOfDirs.begin(), listOfDirs.end(), PlistOfDirs.begin(), PlistOfDirs.end(),
+						std::inserter(newDirs, newDirs.end()));
+
+	if(newDirs.size() !=0){
+		for(auto i = newDirs.begin(); i != newDirs.end(); ++i)
+		{
+			cout << *i << ", ";
+		}
+		cout << endl;
+	}
+
 	if(newFiles.size()!= 0)
 	{
 		for(auto i = newFiles.begin(); i != newFiles.end(); ++i)
@@ -278,6 +339,27 @@ static int do_getattr(const char *path, struct stat *st)
 			cout << *i << ", ";
 		}
 		cout << endl;
+	}
+
+
+	if(newDirs.size() > 0 && !updateInProgress){
+		updateInProgress = true;
+
+		for(auto i = newDirs.begin(); i != newDirs.end(); ++i)
+		{
+
+			std::ofstream myDir;
+			std::string newDirName = *i; 
+
+			char fpath[PATH_MAX];
+			strncpy(fpath, mountpoint.path, PATH_MAX);
+			strncat(fpath, newDirName.c_str(), PATH_MAX);
+
+			mkdir(fpath, 0755);
+			
+		}
+		updateInProgress = false;
+		PlistOfDirs = listOfDirs;
 	}
 
 	if(newFiles.size() > 0 && !updateInProgress)
@@ -598,6 +680,20 @@ static int do_mkdir(const char *path, mode_t mode)
 		perror("problem in mkdir: %s");
 		return -errno;
 	}
+
+
+
+	wait = 0;
+	node.put("LIST_OF_DIRS", path, [](bool success) 
+		{
+			std::cout << "\n\nnode.put(LIST_OF_DIRS, path) ------------ with " << (success ? "success" : "failure") << std::endl;
+			wait = 1;
+			
+		});
+	while(wait == 0){}
+
+
+
 	return returnStatus;
 }
 
