@@ -299,8 +299,8 @@ bool updateInProgress = false;
 static int do_getattr(const char *path, struct stat *st)
 {
 	newFiles.clear();
-	translateListOfFiles();
-	translateListOfDirs();
+	
+	
 
 	cout << "List of Files After Update=======================================================================================================================\n";
 	if(listOfFiles.size()!= 0)
@@ -433,6 +433,10 @@ static int do_getattr(const char *path, struct stat *st)
 
 static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
+	
+	translateListOfDirs();
+	translateListOfFiles();
+	
 	int retstat = 0;
 	order++;
 	printf("---------------------------------------------------------------do_readdir: %i\n", order);
@@ -547,10 +551,10 @@ static int do_write(const char *path, const char *buffer, size_t size, off_t off
 				std::cout << "\n\nnode.put(path, buffer) ------------ with " << (success ? "success" : "failure") << std::endl;
 				wait = 1;
 			});
-		while(wait == 0){}
+		
 	}
 
-
+	while(wait == 0){}
 	
 
 	return retstat;
@@ -565,7 +569,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 {
 	order++;
 	printf("-----------------------------------------------------------------------------doread: %i\n", order);
-	cout << "DO_READ PATH+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << path << endl;
+	
+	cout << "\n\nOPENDHT Section-----: " << endl;
+	cout << "DO_READ PATH--------" << path << endl;
 	int retstat = 0;
 
 	std::mutex mtx;           // mutex for critical section
@@ -578,13 +584,13 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	{
 
 		mtx.lock();
-		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+		cout << "Node.get starting..." << endl;
 	
 		unsigned long long longestTime = 0;
 		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString, &longestTime](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				
-				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+				cout << "IN Node.get+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 				// Callback called when values are found
 				for (const auto& value : values)
 				{
@@ -593,9 +599,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 					mystream << *value;
 					dataAsString = mystream.str();
 
-					cout << "dataAsSting Before+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++:"<<dataAsString <<endl;
+					cout << "String Before++++:"<<dataAsString <<endl;
 					dataAsString = dataAsString.substr(dataAsString.find("data:") + 7);
-					cout << "dataAsSting After+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++:"<<dataAsString <<endl;
+					cout << "String After++++++:"<<dataAsString <<endl;
 					dataAsString.pop_back();
 
 					int len = dataAsString.length();
@@ -609,25 +615,25 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 
 					
-					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++NEW STRING: " << newString << endl << endl; 
+					cout << "+++++++++++++++++++++++++++++++++NEW STRING: " << newString << endl << endl; 
 
   					std::string newTime = newString.substr(0, newString.find(" "));
 
-					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++NEW TIME: " << newTime << endl << endl; 
-					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++LONGEST TIME: " << longestTime << endl; 
+					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++NEW TIME: " << newTime << endl << endl; 
+					cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++LONGEST TIME: " << longestTime << endl; 
 
 					if(std::stoull(newTime) > longestTime)
 					{
 						longestTime = std::stoull(newTime);
 						finalString = newString;
-						cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE LONGEST TIME: " << longestTime << endl; 
-						cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE FINAL STRING: " << finalString << endl; 
+						cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE LONGEST TIME: " << longestTime << endl; 
+						cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++UPDATE FINAL STRING: " << finalString << endl; 
 
 					}
 					//break;
 				}
 
-				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
 				mtx.unlock();
 				return true;
@@ -656,8 +662,8 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	memcpy(buffer, finalString.c_str(), finalString.size());
 	size = strlen(buffer);
 
-	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER ON RETURN:" << buffer << "--SIZE ON RETURN:" << size << endl;
-	return size - offset;
+	cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++BUFFER ON RETURN:" << buffer << "--SIZE ON RETURN:" << size << endl << endl << endl;
+	return size;
 	
 }
 
