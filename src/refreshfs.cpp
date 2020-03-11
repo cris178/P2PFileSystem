@@ -304,9 +304,59 @@ std::set<std::string> PlistOfDirs;
 static int do_getattr(const char *path, struct stat *st)
 {
 	
+
+
+	order = 0;
+	printf("------------------------------------------------------getattr: %i\n", order);
+	printf("File is %s\n", path);
+
+	int returnStatus;
+
+
+	char fpath[PATH_MAX];
+	strncpy(fpath, mountpoint.path, PATH_MAX);
+	strncat(fpath, path, PATH_MAX);
+	printf("Full absolute path created: %s\n", fpath);
+
+
+	returnStatus = stat(fpath, st);
+
+
+	if (returnStatus < 0)
+	{
+		perror("Something went wrong in do_getattr: \n");
+		returnStatus = -errno;
+	}
+
+	if (S_ISDIR(st->st_mode))
+	{
+		// st->st_mode = S_IFDIR | 0755;
+		// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+		printf("Inode number %d\n", st->st_ino);
+		printf("is directory: %d\n", S_ISDIR(st->st_mode));
+	}
+	else if (S_ISREG(st->st_mode))
+	{
+
+		printf("File NOT directory\n");
+	}
 	
 
-	cout << "List of Files After Update=======================================================================================================================\n";
+	return returnStatus;
+
+}
+
+static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+{
+
+
+	newFiles.clear();
+	newDirs.clear();
+	translateListOfDirs();
+	translateListOfFiles();
+
+
+		cout << "List of Files After Update=======================================================================================================================\n";
 	if(listOfFiles.size()!= 0)
 	{
 		for(auto i = listOfFiles.begin(); i != listOfFiles.end(); ++i)
@@ -416,54 +466,17 @@ static int do_getattr(const char *path, struct stat *st)
 	}
 
 
-	order = 0;
-	printf("------------------------------------------------------getattr: %i\n", order);
-	printf("File is %s\n", path);
-
-	int returnStatus;
 
 
-	char fpath[PATH_MAX];
-	strncpy(fpath, mountpoint.path, PATH_MAX);
-	strncat(fpath, path, PATH_MAX);
-	printf("Full absolute path created: %s\n", fpath);
 
 
-	returnStatus = stat(fpath, st);
 
 
-	if (returnStatus < 0)
-	{
-		perror("Something went wrong in do_getattr: \n");
-		returnStatus = -errno;
-	}
-
-	if (S_ISDIR(st->st_mode))
-	{
-		// st->st_mode = S_IFDIR | 0755;
-		// st->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
-		printf("Inode number %d\n", st->st_ino);
-		printf("is directory: %d\n", S_ISDIR(st->st_mode));
-	}
-	else if (S_ISREG(st->st_mode))
-	{
-
-		printf("File NOT directory\n");
-	}
-	
-
-	return returnStatus;
-
-}
-
-static int do_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
-{
 
 
-	newFiles.clear();
-	newDirs.clear();
-	translateListOfDirs();
-	translateListOfFiles();
+
+
+
 
 	int retstat = 0;
 	order++;
