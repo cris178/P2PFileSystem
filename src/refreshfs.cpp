@@ -613,7 +613,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	cout << "DO_READ PATH+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << path << endl;
 	int retstat = 0;
 
-	std::mutex mtx;           // mutex for critical section
+	// std::mutex mtx;           // mutex for critical section
 	std::string pathAsString = path; 
 
 	std::string finalString;
@@ -622,11 +622,11 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 	if(    listOfFiles.find(pathAsString) != listOfFiles.end()   )
 	{
 
-		mtx.lock();
+		// mtx.lock();
 		cout << "GETTING IT+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 	
 		unsigned long long longestTime = 0;
-		node.get(path, [&buffer, &mtx, &path, &size, &offset, &fi, &finalString, &longestTime](const std::vector<std::shared_ptr<dht::Value>>& values)  
+		node.get(path, [&buffer, &path, &size, &offset, &fi, &finalString, &longestTime](const std::vector<std::shared_ptr<dht::Value>>& values)  
 			{		
 				
 				cout << "IN THE GET+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
@@ -674,7 +674,7 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 
 				cout << "FINISH THE GET++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
 
-				mtx.unlock();
+				// mtx.unlock();
 				return true;
 			}, [&finalString](bool success) 
 				{
@@ -687,9 +687,9 @@ static int do_read(const char *path, char *buffer, size_t size, off_t offset, st
 				while(wait == 0){}
 			
 
-			mtx.lock();
+			// mtx.lock();
 			cout << "OUTSIDE+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-			mtx.unlock();	
+			// mtx.unlock();	
 	}
 	
 	cout << "DONE++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
