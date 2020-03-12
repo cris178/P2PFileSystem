@@ -58,21 +58,21 @@ Now your OS is ready to support a FUSE filesystem.
 
 * sudo apt install autoconf
 
-# Install OpenDHT dependencies
+Install OpenDHT dependencies
 
  * sudo apt install libncurses5-dev libreadline-dev nettle-dev libgnutls28-dev libargon2-0-dev libmsgpack-dev librestbed-dev libjsoncpp-dev
 
-# clone the repo
+clone the repo
 
 * git clone https://github.com/savoirfairelinux/opendht.git
 
-# build and install
+build and install
 
 cd opendht
 mkdir build && cd build
 cmake -DOPENDHT_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
 
-# Workaround for asio from issues thread in OpenDHT repository
+Workaround for asio from issues thread in OpenDHT repository
 
 wget https://github.com/aberaud/asio/archive/b2b7a1c166390459e1c169c8ae9ef3234b361e3f.tar.gz \
 && tar -xvf b2b7a1c166390459e1c169c8ae9ef3234b361e3f.tar.gz && cd asio-b2b7a1c166390459e1c169c8ae9ef3234b361e3f/asio \
@@ -82,7 +82,7 @@ wget https://github.com/aberaud/asio/archive/b2b7a1c166390459e1c169c8ae9ef3234b3
 cd ..
 cd ..
 
-# In the build folder
+In the build folder
 make -j4
 sudo make install
 
