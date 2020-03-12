@@ -46,14 +46,63 @@ until you see passing tests. Make sure a majority of the tests pass.
 
 Now your OS is ready to support a FUSE filesystem. 
 
+## OpenDHT Requirements
 
 
-## Building the File System
-The src Folder contains the program for our FUSE file system. 
+* sudo apt-get --upgrade
 
-Once in src just run the Make file using the command Make.
-Once refreFS wil be the program that will be ran in order
-to build the filesystem.
+* sudo apt-get install build-essential
+
+* sudo apt install cmake
+
+
+* sudo apt install autoconf
+
+Install OpenDHT dependencies
+
+ * sudo apt install libncurses5-dev libreadline-dev nettle-dev libgnutls28-dev libargon2-0-dev libmsgpack-dev librestbed-dev libjsoncpp-dev
+
+clone the repo
+
+* git clone https://github.com/savoirfairelinux/opendht.git
+
+build and install
+
+cd opendht
+mkdir build && cd build
+cmake -DOPENDHT_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
+
+Workaround for asio from issues thread in OpenDHT repository
+
+wget https://github.com/aberaud/asio/archive/b2b7a1c166390459e1c169c8ae9ef3234b361e3f.tar.gz \
+&& tar -xvf b2b7a1c166390459e1c169c8ae9ef3234b361e3f.tar.gz && cd asio-b2b7a1c166390459e1c169c8ae9ef3234b361e3f/asio \
+&& ./autogen.sh && ./configure --prefix=/usr --without-boost --disable-examples --disable-tests  \
+&& sudo make install
+
+cd ..
+cd ..
+
+In the build folder
+make -j4
+sudo make install
+
+
+## Building our P2P File System
+
+Now that you installed Fuse and OpenDHT you are ready to make our filesystem.
+
+* Open P2PFileSystem Folder
+* Open src Folder
+* mkdir rootdir 
+* mkdir Mountingpoint
+* make clean
+* make
+* ./refreshFS -d -s Mountingpoint
+
+This will make the file system run in single threaded mode and in devmode. 
+Once it starts you will see the fuse file system operations on screen. Open a new 
+tab on the terminal and navigate to the mounting point. You can now create and
+edit files in a P2P filesystem.
 
 ## Testing and Running
 
