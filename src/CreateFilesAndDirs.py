@@ -2,7 +2,7 @@ import os
 import time
 
 os.chdir("Mountingpoint")
-
+#
 for i in range(10):
     with open('F' + str(i) + '.txt', 'w') as FW:
         time.sleep(1)
