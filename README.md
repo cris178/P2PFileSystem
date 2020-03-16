@@ -16,11 +16,15 @@ With a fresh install of Ubuntu, download and install the following.
 
 ## FUSE Install Requirements
 
+Below are the terminal instructions required to install a Fuse File System. Feel free to copy and paste the instructions. 
+
 On the Ubuntu Terminal.
 
-* sudo apt-get update
-* sudo apt-get install fuse
-* sudo apt-get install libfuse-dev
+sudo apt-get update
+
+sudo apt-get install fuse
+
+sudo apt-get install libfuse-dev
 
 Download the fuse library of functions
 https://github.com/libfuse/libfuse
@@ -43,31 +47,30 @@ Need Python3 to run the tests to see if FUSE is working
 
 **optional**
 
-Then just follow instructions on libfuse github readMe
-until you see passing tests. Make sure a majority of the tests pass.
+This section small section can be ignored and you can move onto the openDHT section. In order to test if you installed fuse correctly go to the readme in the libfuse folder and just follow those instructions. You should see some passing tests if correctly installed.
 
 Now your OS is ready to support a FUSE filesystem. **Next setup OpenDHT**. 
 
 ## OpenDHT Install Requirements
 
 
-* sudo apt-get --upgrade
+sudo apt-get --upgrade
 
-* sudo apt-get install build-essential
+sudo apt-get install build-essential
 
-* sudo apt install cmake
+sudo apt install cmake
 
-* sudo apt install autoconf
+sudo apt install autoconf
 
-Install OpenDHT dependencies
+**Install OpenDHT dependencies**
 
- * sudo apt install libncurses5-dev libreadline-dev nettle-dev libgnutls28-dev libargon2-0-dev libmsgpack-dev librestbed-dev libjsoncpp-dev
+sudo apt install libncurses5-dev libreadline-dev nettle-dev libgnutls28-dev libargon2-0-dev libmsgpack-dev librestbed-dev libjsoncpp-dev
 
-clone the repo
+**clone the repo**
 
-* git clone https://github.com/savoirfairelinux/opendht.git
+git clone https://github.com/savoirfairelinux/opendht.git
 
-build and install 
+**build and install** 
 
 cd opendht
 
@@ -75,7 +78,7 @@ mkdir build && cd build
 
 cmake -DOPENDHT_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=/usr ..
 
-Workaround for asio from issues thread in OpenDHT repository
+**Workaround for asio from issues thread in OpenDHT repository**
 
 wget https://github.com/aberaud/asio/archive/b2b7a1c166390459e1c169c8ae9ef3234b361e3f.tar.gz \
 && tar -xvf b2b7a1c166390459e1c169c8ae9ef3234b361e3f.tar.gz && cd asio-b2b7a1c166390459e1c169c8ae9ef3234b361e3f/asio \
@@ -86,7 +89,7 @@ cd ..
 
 cd ..
 
-Go in the build folder
+**Go in the build folder**
 
 make -j4
 
@@ -101,22 +104,27 @@ Now that you installed Fuse and OpenDHT you are ready to make our filesystem.
 
 * Open src Folder
 
-* mkdir rootdir 
+mkdir rootdir 
 
-* mkdir Mountingpoint
+mkdir Mountingpoint
 
-* make clean
-* make
-* ./refreshFS -d -s Mountingpoint
+make clean
+
+make
+
+./refreshFS -d -s Mountingpoint
 
 This will make the file system run in single threaded mode and in devmode. 
 Once it starts you will see the fuse file system operations on screen. Open a new 
 tab on the terminal and navigate to the mounting point. You can now create and
-edit files in a P2P filesystem.
+edit files in a P2P filesystem. 
 
 ## Testing and Running
 
-Currently we are debugging the program using GDB. In order
+You can run the program as stated above using the -d flag which puts the fuse file system in dev mode and allows you to see the functions running in real time. Or you can use GDB if that's your personal preference. 
+
+
+In order
 to run the program using GDB in the src folder hit the command
 
 * gdb refreshFS
@@ -128,7 +136,7 @@ This will allow you to set break points using the command 'b [line number]'.
 
 To skip the break points once entering gdb just enter
 
- * run -s -d Mountdir
+ * run -s -d Mountingpoint
  * -s: Runs the file system as a single thread program
  * -d: Allows for debugging options
  * Mountdir: is the name of the folder that will be tourned to our mounting point.
@@ -137,10 +145,11 @@ ctrl c and q exits the program.
 
 
 
+**To unmount use the instruction**
 
-To unmount use the instruction
+While in the directory containing the mountingPoint folder.
 
-* fusermount -u [mounting point]
+* fusermount -u mountingPoint
 
 
 
