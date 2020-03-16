@@ -14,7 +14,7 @@ With a fresh install of Ubuntu, download and install the following.
 
 ## FUSE Install Requirements
 
-Below are the terminal instructions required to install a Fuse File System. Feel free to copy and paste the instructions. 
+Below are the terminal instructions required to install a Fuse File System. Feel free to copy and paste the terminal commands. 
 
 **On the Ubuntu Terminal**
 
@@ -31,17 +31,23 @@ https://github.com/libfuse/libfuse**
 Will need the following**
 
 **meson and ninja needed to build libfuse** 
-* sudo apt-get install meson
+
+sudo apt-get install meson
 
 **For Meson to work we need to build essentials**
-* sudo apt-get upgrade
-* sudo apt-get install build essential
-* sudo apt-get install pkg-config
+sudo apt-get upgrade
+
+sudo apt-get install build essential
+
+sudo apt-get install pkg-config
 
 **Need Python3 to run the tests to see if FUSE is working**
-* sudo apt-get install python3.7
-* sudo apt-get install python3-pip
-* pip3 install --user pytest
+
+sudo apt-get install python3.7
+
+sudo apt-get install python3-pip
+
+pip3 install --user pytest
 
 **optional**
 
