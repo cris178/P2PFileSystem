@@ -1,7 +1,5 @@
 # P2PFileSystem
-A Peer to Peer file system built on top of FUSE (File System in User Space ). 
-P2PFS is an inmemory file system meaning that all files and directories created 
-will not exist once that filesystem is unmounted.
+A Peer to Peer file system built on top of FUSE (File System in User Space ) and openDHT(Distributed Hash Table). Our P2PFileSystem allows any user to make text files and directories available to any person with out file system mounted. Just write a .txt in your preffered text editor and watch as the file appears on any other computer.  
 
 
 # Installing FUSE
