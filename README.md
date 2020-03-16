@@ -119,6 +119,8 @@ edit files in a P2P filesystem.
 
 ## Testing and Running
 
+**Test Scripts**
+
 Once you have two computers running our P2PFileSystem we made a script that automatically creates files and directories and another that checks if they were successfully created. 
 
     CreateFilesAndDirs.py
