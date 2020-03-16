@@ -18,7 +18,7 @@ With a fresh install of Ubuntu, download and install the following.
 
 Below are the terminal instructions required to install a Fuse File System. Feel free to copy and paste the instructions. 
 
-On the Ubuntu Terminal.
+**On the Ubuntu Terminal**
 
 sudo apt-get update
 
@@ -26,21 +26,21 @@ sudo apt-get install fuse
 
 sudo apt-get install libfuse-dev
 
-Download the fuse library of functions
-https://github.com/libfuse/libfuse
+**Download the fuse library of functions
+https://github.com/libfuse/libfuse**
 
-In order to test if libfuse is working well
-Will need the following
+**In order to test if libfuse is working well
+Will need the following**
 
-meson and ninja needed to build libfuse 
+**meson and ninja needed to build libfuse** 
 * sudo apt-get install meson
 
-For Meson to work we need to build essentials
+**For Meson to work we need to build essentials**
 * sudo apt-get upgrade
 * sudo apt-get install build essential
 * sudo apt-get install pkg-config
 
-Need Python3 to run the tests to see if FUSE is working
+**Need Python3 to run the tests to see if FUSE is working**
 * sudo apt-get install python3.7
 * sudo apt-get install python3-pip
 * pip3 install --user pytest
@@ -120,6 +120,19 @@ tab on the terminal and navigate to the mounting point. You can now create and
 edit files in a P2P filesystem. 
 
 ## Testing and Running
+
+Once you have two computers running our P2PFileSystem we made a script that automatically creates files and directories and another that checks if they were successfully created. 
+
+    CreateFilesAndDirs.py
+
+Makes several files and directories. 
+
+    TestFilesAndDirsCreated.py	
+
+Checks if the files were successfully created. 
+
+
+**GDB**
 
 You can run the program as stated above using the -d flag which puts the fuse file system in dev mode and allows you to see the functions running in real time. Or you can use GDB if that's your personal preference. 
 
