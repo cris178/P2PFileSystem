@@ -51,7 +51,7 @@ pip3 install --user pytest
 
 **optional**
 
-This section small section can be ignored and you can move onto the openDHT section. In order to test if you installed fuse correctly go to the readme in the libfuse folder and just follow those instructions. You should see some passing tests if correctly installed.
+This small section can be ignored and you can move onto the openDHT section. In order to test if you installed fuse correctly go to the readme in the libfuse folder and just follow those instructions. You should see some passing tests if correctly installed.
 
 Now your OS is ready to support a FUSE filesystem. **Next setup OpenDHT**. 
 
