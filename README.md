@@ -288,7 +288,7 @@ The first check is to see if the directory entry is null. If it's null something
 
 With that in mind lets refresh what we did in this function. We made a directory pointer dp and set it to fh(another fuse function sets up fh), then we use that fh(file handle id) that's in dp to read the directory which returns the directory entry structure above. We place the name of the directory entry in a filler and loop until we reach the end of dp. In short this function puts names of null terminated files in a filler. 
 
-You can see how this could be useful for a a file function like LS. In the current version of our file system and our existing fuse functions the order of operations when making an ls call in a terminal is.
+You can see how this could be useful for a a file function like LS. 
 
 
 ### write
