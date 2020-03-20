@@ -181,16 +181,16 @@ Having a basic understanding of how the file system worked we could then build o
 more feature complete file systems and how they handle routines that every file system needs. 
 
 
-### Pre Req Knowledge
-
-Before you dive in there are some things you must know.
-
 ### OpenDHT 
 * OpenDHT stands for Distributed Hashtable. A distributed hashtable is essentially a hashtable that is shared among different IP addresses that all have access to the hashtable. It is distributed because the hashtable values are stored across the IP addresses. 
 
 * OpenDHT works by connecting nodes that with different IP addresses such that the number of connections is minimized but all nodes can reach all values in the hashtable. The specific implementation of the connection algorithm is called Kademlia and uses an exponential function to determine the connections.
 
 * To put a value on the hashtable, a node will send a put request using the OpenDHT API that specifies a key-value pair. That value will remain stored on that node's storage but the key and value will be accessible from all nodes connected to the hashtable. When another node performs a get request to request the data associated with a key, the OpenDHT follows a path of connections to a node that has the value stored on the computer and then returns the value following a set of connections.
+
+### Pre Req Knowledge
+
+Before you dive in there are some things you must know.
 
 * Everything is a file, even am a file
 In Unix everything is a file. Yes that means a directory is a file too. 
