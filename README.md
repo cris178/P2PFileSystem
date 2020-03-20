@@ -185,7 +185,7 @@ more feature complete file systems and how they handle routines that every file 
 
 Before you dive in there are some things you must know.
 
-# OpenDHT 
+### OpenDHT 
 * OpenDHT stands for Distributed Hashtable. A distributed hashtable is essentially a hashtable that is shared among different IP addresses that all have access to the hashtable. It is distributed because the hashtable values are stored across the IP addresses. 
 
 * OpenDHT works by connecting nodes that with different IP addresses such that the number of connections is minimized but all nodes can reach all values in the hashtable. The specific implementation of the connection algorithm is called Kademlia and uses an exponential function to determine the connections.
