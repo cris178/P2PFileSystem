@@ -188,6 +188,8 @@ more feature complete file systems and how they handle routines that every file 
 
 * To put a value on the hashtable, a node will send a put request using the OpenDHT API that specifies a key-value pair. That value will remain stored on that node's storage but the key and value will be accessible from all nodes connected to the hashtable. When another node performs a get request to request the data associated with a key, the OpenDHT follows a path of connections to a node that has the value stored on the computer and then returns the value following a set of connections.
 
+* Lastly, connecting to the hashtable community is done through something called a bootstrap node. For one node to connect to the community it must ping a node that is already in the community. It can be any node in the community. It just has to be already in the community. To start a hashtable with an initial node, we can run a dhtnode process (provided by the API) in the terminal. This will run a bootstrap node on the host machines IP address and a random or specified port.
+
 ### Pre Req Knowledge
 
 Before you dive in there are some things you must know.
