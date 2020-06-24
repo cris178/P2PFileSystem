@@ -178,7 +178,9 @@ The base of our P2P file system started out from. LSYSFS, a less simple yet stup
 LSYSFS is a in memory(all files disapear on dismount) file system that is as simple as it gets, it reads only one directory level down. With 
 LSYSFS as a base we looked at how each function worked. What does each function need? What does it return?
 Having a basic understanding of how the file system worked we could then build on top of it by looking at 
-more feature complete file systems and how they handle routines that every file system needs. 
+more feature complete file systems and how they handle routines that every file system needs.
+
+For the story behind using FUSE specifically try reading this Medium post: https://medium.com/@cris178/building-a-fuse-file-system-ee8f90fd0a2f
 
 
 ### OpenDHT 
